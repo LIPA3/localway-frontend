@@ -1,0 +1,82 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'story/**'
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      ${{
+      github.ref == 'refs/heads/main' && 'release' ||
+      startsWith(github.ref, 'refs/heads/feature/') && 'dev' ||
+      startsWith(github.ref, 'refs/heads/story/') && 'dev' ||
+      'dev'
+      }}
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/story/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          CI: false
+          GENERATE_SOURCEMAP: false
+
+      - name: Install Railway CLI
+        if: github.event_name != 'pull_request'
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway App Service
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "Starting deployment to Railway..."
+          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+
+      - name: Health Check
+        run: |
+          echo "Starting health check (5 minutes max)..."
+
+          SERVICE_URL="${{ secrets.SERVICE_BASE_URL }}"
+
+          # Wait 60 seconds for service startup
+          echo "Waiting 60 seconds for service to start..."
+          sleep 60
+
+          # 5-minute health check with 30-second intervals
+          for i in {1..10}; do
+            echo "Health check attempt $i/10..."
+            if curl -s -f --max-time 30 "${SERVICE_URL}" > /dev/null 2>&1; then
+              echo "✅ Service is healthy!"
+              exit 0
+            fi
+            if [ $i -lt 10 ]; then
+              echo "⏳ Service not ready, waiting 30s..."
+              sleep 30
+            fi
+          done
+          echo "❌ Health check failed after 5 minutes"
+          exit 1

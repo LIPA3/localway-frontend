@@ -23,7 +23,6 @@ jobs:
       startsWith(github.ref, 'refs/heads/story/') && 'dev' ||
       'dev'
       }}
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/story/')
 
     steps:
       - name: Checkout code
@@ -45,11 +44,11 @@ jobs:
           GENERATE_SOURCEMAP: false
 
       - name: Install Railway CLI
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event_name == 'workflow_dispatch'
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway App Service
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || github.event_name == 'workflow_dispatch'
         run: |
           echo "Starting deployment to Railway..."
           railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}

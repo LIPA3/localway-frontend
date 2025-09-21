@@ -23,7 +23,6 @@ jobs:
       startsWith(github.ref, 'refs/heads/story/') && 'dev' ||
       'dev'
       }}
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/story/')
 
     steps:
       - name: Checkout code

@@ -1,9 +1,5 @@
-import { createBrowserRouter } from "react-router";
-import homePage from "../pages/homePage";
-const route=createBrowserRouter([
-    {
-        path:'/',
-        element:<homePage></homePage>
-    }
-])
-export default route;
+import HomePage from "../pages/HomePage";
+
+export default function Home() {
+  return <HomePage />;
+}

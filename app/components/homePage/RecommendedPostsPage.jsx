@@ -161,7 +161,7 @@ export function RecommendedPostsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="home-page min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -196,7 +196,7 @@ export function RecommendedPostsPage() {
               to={`/posts/${post.article_id}`}
               className="block"
             >
-              <Card className="border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+              <Card className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-0">
                   <div className="md:flex">
                     {/* Image */}
@@ -267,7 +267,7 @@ export function RecommendedPostsPage() {
                           <Badge
                             key={tag}
                             variant="outline"
-                            className="text-xs border-border"
+                            className="text-xs border-border mypost-border tag-blue"
                           >
                             {tag}
                           </Badge>

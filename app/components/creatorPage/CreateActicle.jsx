@@ -1,7 +1,7 @@
 "use client"
 
-
 import { useState } from "react"
+import axios from "axios"
 import { PenTool, ImageIcon, MapPin, Tag, Save, Send, Plus, X, Upload, Clock, Users, Star } from "lucide-react"
 import { Button } from "../ui/Button"
 import { Input } from "../ui/Input"
@@ -12,7 +12,6 @@ import { Label } from "../ui/Label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 
-const categories = ["美食文化", "历史人文", "艺术创意", "传统手工", "现代生活", "自然户外", "音乐表演", "建筑设计"]
 
 const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
 
@@ -24,8 +23,17 @@ export function CreatorContentPage() {
   const [tags, setTags] = useState([])
   const [newTag, setNewTag] = useState("")
   const [duration, setDuration] = useState("")
-  const [maxParticipants, setMaxParticipants] = useState("")
+  // const [maxParticipants, setMaxParticipants] = useState("")
   const [activeTab, setActiveTab] = useState("edit")
+  
+  // 图片上传相关状态
+  const [uploadedImages, setUploadedImages] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  
+  // 发布相关状态
+  const [publishing, setPublishing] = useState(false)
+  const [publishSuccess, setPublishSuccess] = useState(false)
 
   const addTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -45,6 +53,187 @@ export function CreatorContentPage() {
     }
   }
 
+  // 图片上传函数
+  const handleImageUpload = async (file) => {
+    // 检查图片数量限制
+    if (uploadedImages.length >= 9) {
+      alert('最多只能上传9张图片')
+      return
+    }
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', 'experience') // 体验图片类型
+      
+      const response = await axios.post('/api/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          )
+          setUploadProgress(percentCompleted)
+        },
+      })
+
+      if (response.data.success) {
+        const newImage = {
+          id: Date.now(),
+          url: response.data.url,
+          name: file.name,
+          size: file.size
+        }
+        setUploadedImages(prev => [...prev, newImage])
+        console.log('图片上传成功:', response.data.url)
+      } else {
+        throw new Error(response.data.message || '上传失败')
+      }
+    } catch (error) {
+      console.error('图片上传失败:', error)
+      alert('图片上传失败: ' + (error.response?.data?.message || error.message))
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }
+
+  // 处理文件选择
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files)
+
+    
+    files.forEach(file => {
+      // 验证文件类型
+      if (!file.type.startsWith('image/')) {
+        alert('请选择图片文件')
+        return
+      }
+      
+      // 验证文件大小 (5MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('图片大小不能超过5MB')
+        return
+      }
+      
+      handleImageUpload(file)
+    })
+  }
+
+  // 删除图片
+  const removeImage = (imageId) => {
+    setUploadedImages(prev => prev.filter(img => img.id !== imageId))
+  }
+
+  // 发布体验函数
+  const handlePublishExperience = async () => {
+    // 验证必填字段
+    if (!title.trim()) {
+      alert('请输入体验标题')
+      return
+    }
+    
+    if (!content.trim()) {
+      alert('请输入体验描述')
+      return
+    }
+    
+    if (!selectedLocation) {
+      alert('请选择所在城市')
+      return
+    }
+    
+    // 可选：图片验证（如果要求必须有图片，可以取消注释）
+    // if (uploadedImages.length === 0) {
+    //   alert('请至少上传一张图片')
+    //   return
+    // }
+
+    setPublishing(true)
+    
+    try {
+      const experienceData = {
+        title: title.trim(),
+        content: content.trim(),
+        location: selectedLocation,
+        category: selectedCategory,
+        tags: tags,
+        images: uploadedImages.map(img => img.url),
+        duration: duration,
+        status: 'published', // 发布状态
+        createdAt: new Date().toISOString()
+      }
+
+      const response = await axios.post('/api/experiences', experienceData, {
+        headers: {
+          'Content-Type': 'application/json',
+          // 如果需要认证，添加 Authorization header
+          // 'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.data.success) {
+        setPublishSuccess(true)
+        alert('体验发布成功！')
+        
+        // 重置表单或跳转到体验详情页
+        // 可以根据需要导航到发布成功页面
+        console.log('发布成功，体验ID:', response.data.experienceId)
+        
+        // 清空表单
+        setTitle('')
+        setContent('')
+        setSelectedCategory('')
+        setSelectedLocation('')
+        setTags([])
+        setUploadedImages([])
+        setDuration('')
+        
+      } else {
+        throw new Error(response.data.message || '发布失败')
+      }
+      
+    } catch (error) {
+      console.error('发布体验失败:', error)
+      
+      if (error.response) {
+        // 服务器返回错误响应
+        const errorMessage = error.response.data?.message || '发布失败，请重试'
+        alert(`发布失败: ${errorMessage}`)
+      } else if (error.request) {
+        // 网络错误
+        alert('网络连接失败，请检查网络后重试')
+      } else {
+        // 其他错误
+        alert('发布失败: ' + error.message)
+      }
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  // 拖拽上传处理
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const files = Array.from(e.dataTransfer.files)
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(file)
+      }
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -58,13 +247,18 @@ export function CreatorContentPage() {
               <h1 className="text-xl font-bold text-foreground">创作中心</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              {/* <Button variant="outline" size="sm" onClick={handleSaveDraft}>
                 <Save className="w-4 h-4 mr-2" />
                 保存草稿
-              </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
+              </Button> */}
+              <Button 
+                size="sm" 
+                className="bg-primary hover:bg-primary/90"
+                onClick={handlePublishExperience}
+                disabled={publishing}
+              >
                 <Send className="w-4 h-4 mr-2" />
-                发布体验
+                {publishing ? '发布中...' : '发布体验'}
               </Button>
             </div>
           </div>
@@ -102,22 +296,6 @@ export function CreatorContentPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category">体验类别</Label>
-                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="选择体验类别" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
                       <Label htmlFor="location">所在城市</Label>
                       <Select value={selectedLocation} onValueChange={setSelectedLocation}>
                         <SelectTrigger className="mt-1">
@@ -131,30 +309,6 @@ export function CreatorContentPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="duration">体验时长</Label>
-                      <Input
-                        id="duration"
-                        placeholder="如：2小时"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="participants">最大人数</Label>
-                      <Input
-                        id="participants"
-                        placeholder="如：6人"
-                        value={maxParticipants}
-                        onChange={(e) => setMaxParticipants(e.target.value)}
-                        className="mt-1"
-                      />
                     </div>
                   </div>
                 </CardContent>
@@ -196,14 +350,83 @@ export function CreatorContentPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                  <div 
+                    className="border-2 border-dashed border-border rounded-lg p-8 text-center"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
                     <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-2">点击上传或拖拽图片到此处</p>
-                    <p className="text-sm text-muted-foreground">支持 JPG、PNG 格式，建议尺寸 1200x800px</p>
-                    <Button variant="outline" className="mt-4 bg-transparent">
-                      选择图片
+                    <p className="text-sm text-muted-foreground">支持 JPG、PNG 格式，最大5MB，最多9张图片</p>
+                    <p className="text-sm text-muted-foreground">建议尺寸 1200x800px</p>
+                    
+                    <input
+                      type="file"
+                      id="imageUpload"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    
+                    <Button 
+                      variant="outline" 
+                      className="mt-4 bg-transparent"
+                      onClick={() => document.getElementById('imageUpload').click()}
+                      disabled={uploading || uploadedImages.length >= 9}
+                    >
+                      {uploading 
+                        ? `上传中 ${uploadProgress}%` 
+                        : uploadedImages.length >= 9 
+                          ? '已达上限(9张)'
+                          : `选择图片 (${uploadedImages.length}/9)`
+                      }
                     </Button>
                   </div>
+
+                  {/* 上传进度条 */}
+                  {uploading && (
+                    <div className="mt-4">
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 已上传的图片列表 */}
+                  {uploadedImages.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium mb-3">
+                        已上传的图片 ({uploadedImages.length}/9)
+                        {uploadedImages.length >= 9 && (
+                          <span className="text-orange-600 ml-2">已达上限</span>
+                        )}
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {uploadedImages.map((image) => (
+                          <div key={image.id} className="relative group">
+                            <img
+                              src={image.url}
+                              alt={image.name}
+                              className="w-full h-24 object-cover rounded-lg border"
+                            />
+                            <button
+                              onClick={() => removeImage(image.id)}
+                              className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                            <div className="mt-1 text-xs text-muted-foreground truncate">
+                              {image.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -269,7 +492,7 @@ export function CreatorContentPage() {
                           {selectedLocation}
                         </div>
                       )}
-
+{/* 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {duration && (
                           <div className="flex items-center gap-1">
@@ -283,7 +506,7 @@ export function CreatorContentPage() {
                             最多{maxParticipants}
                           </div>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* Description Preview */}

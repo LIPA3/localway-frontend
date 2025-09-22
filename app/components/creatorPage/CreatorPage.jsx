@@ -129,10 +129,6 @@ export function CreatorProfilePage() {
                       <span>广州</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span>4.9</span>
-                    </div>
-                    <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       <span>加入于 2023年</span>
                     </div>

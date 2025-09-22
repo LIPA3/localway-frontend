@@ -1,12 +1,9 @@
-import { Welcome } from "../welcome/welcome";
-
-export function meta({}) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
-
-export default function Home() {
-  return <Welcome />;
-}
+import { createBrowserRouter } from "react-router";
+import homePage from "../pages/homePage";
+const route=createBrowserRouter([
+    {
+        path:'/',
+        element:<homePage></homePage>
+    }
+])
+export default route;

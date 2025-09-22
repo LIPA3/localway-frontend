@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { ApiClientProvider } from "./providers/ApiClientProvider";
 
 import "./app.css";
 
@@ -40,8 +41,16 @@ export function Layout({ children }) {
   );
 }
 
+function Providers({ children }) {
+  return <ApiClientProvider> {children} </ApiClientProvider>;
+}
+
 export default function App() {
-  return <Outlet />;
+  return (
+    <Providers>
+      <Outlet />
+    </Providers>
+  );
 }
 
 export function ErrorBoundary({ error }) {

@@ -11,7 +11,7 @@ import { Badge } from "../ui/Badge"
 import { Label } from "../ui/Label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
-
+import "../../css/CreateArticle.css"
 
 const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
 
@@ -235,7 +235,7 @@ export function CreatorContentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="create-article min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -275,7 +275,7 @@ export function CreatorContentPage() {
 
             <TabsContent value="edit" className="space-y-6">
               {/* Basic Information */}
-              <Card>
+              <Card className="soft-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PenTool className="w-5 h-5" />
@@ -315,7 +315,7 @@ export function CreatorContentPage() {
               </Card>
 
               {/* Content Creation */}
-              <Card>
+              <Card className="soft-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PenTool className="w-5 h-5" />
@@ -342,7 +342,7 @@ export function CreatorContentPage() {
               </Card>
 
               {/* Media Upload */}
-              <Card>
+              <Card className="soft-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ImageIcon className="w-5 h-5" />
@@ -351,7 +351,7 @@ export function CreatorContentPage() {
                 </CardHeader>
                 <CardContent>
                   <div 
-                    className="border-2 border-dashed border-border rounded-lg p-8 text-center"
+                    className="upload-dropzone border-2 border-dashed border-border rounded-lg p-8 text-center"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                   >
@@ -387,7 +387,7 @@ export function CreatorContentPage() {
                   {/* 上传进度条 */}
                   {uploading && (
                     <div className="mt-4">
-                      <div className="w-full bg-muted rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full progress-bar">
                         <div 
                           className="bg-primary h-2 rounded-full transition-all duration-300" 
                           style={{ width: `${uploadProgress}%` }}
@@ -407,7 +407,7 @@ export function CreatorContentPage() {
                       </h4>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {uploadedImages.map((image) => (
-                          <div key={image.id} className="relative group">
+                          <div key={image.id} className="image-item relative group">
                             <img
                               src={image.url}
                               alt={image.name}
@@ -431,7 +431,7 @@ export function CreatorContentPage() {
               </Card>
 
               {/* Tags */}
-              <Card>
+              <Card className="soft-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Tag className="w-5 h-5" />
@@ -440,8 +440,8 @@ export function CreatorContentPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                        {tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="flex items-center gap-1 mypost-border tag-blue">
                         {tag}
                         <X className="w-3 h-3 cursor-pointer hover:text-destructive" onClick={() => removeTag(tag)} />
                       </Badge>
@@ -478,7 +478,7 @@ export function CreatorContentPage() {
                     <div className="mb-3">
                       <h3 className="font-semibold text-lg mb-2">{title || "体验标题"}</h3>
                       {selectedCategory && (
-                        <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs mypost-border">
                           {selectedCategory}
                         </Badge>
                       )}
@@ -520,12 +520,12 @@ export function CreatorContentPage() {
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-4">
                         {tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge key={tag} variant="outline" className="text-xs mypost-border tag-blue">
                             {tag}
                           </Badge>
                         ))}
                         {tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs mypost-border tag-blue">
                             +{tags.length - 3}
                           </Badge>
                         )}

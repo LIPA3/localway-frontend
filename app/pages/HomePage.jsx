@@ -1,10 +1,11 @@
 import { RecommendedPostsPage } from "../components/homePage/RecommendedPostsPage";
 import { Link } from "react-router";
 import { Button } from "../components/ui/Button";
+import "../css/HomePage.css";
 
 export default function Home() {
   return (
-    <div>
+    <div className="home-page">
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         <Link href="/search">
           <Button

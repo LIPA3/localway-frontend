@@ -21,6 +21,7 @@ import { Badge } from "../ui/Badge"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import { Link } from "react-router"
+import "../../css/CreatorPage.css"
 
 export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
@@ -69,7 +70,7 @@ export function CreatorProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="creator-page min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -101,7 +102,7 @@ export function CreatorProfilePage() {
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Profile Section */}
-          <Card className="mb-6">
+          <Card className="post-card mb-6">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex flex-col items-center md:items-start">
@@ -118,7 +119,7 @@ export function CreatorProfilePage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h2 className="text-2xl font-bold">Ale Chen</h2>
-                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                    <Badge variant="secondary" className="bg-orange-100 text-orange-800 mypost-border">
                       认证
                     </Badge>
                   </div>
@@ -164,7 +165,7 @@ export function CreatorProfilePage() {
 
           {/* Content Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="tabs-list grid w-full grid-cols-3">
               <TabsTrigger value="posts">我的内容</TabsTrigger>
               <TabsTrigger value="analytics">数据分析</TabsTrigger>
               <TabsTrigger value="settings">设置</TabsTrigger>
@@ -183,7 +184,7 @@ export function CreatorProfilePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myPosts.map((post) => (
-                  <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <Card key={post.id} className="post-card overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="aspect-[4/3] overflow-hidden">
                       <img
                         src={post.image || "/placeholder.svg"}
@@ -193,7 +194,7 @@ export function CreatorProfilePage() {
                     </div>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs mypost-border">
                           {post.category}
                         </Badge>
                         <span className="text-xs text-muted-foreground">{post.createdAt}</span>
@@ -208,12 +209,12 @@ export function CreatorProfilePage() {
 
                       <div className="flex flex-wrap gap-1 mb-3">
                         {post.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge key={tag} variant="outline" className="text-xs mypost-border tag-blue">
                             {tag}
                           </Badge>
                         ))}
                         {post.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs mypost-border tag-blue">
                             +{post.tags.length - 3}
                           </Badge>
                         )}

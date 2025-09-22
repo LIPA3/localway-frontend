@@ -18,6 +18,7 @@ import { Card, CardContent } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
 import { Textarea } from "../components/ui/Textarea";
+import "../css/PostDetail.css";
 
 // DEMO DATA
 const postsData = [
@@ -420,7 +421,7 @@ export default function PostDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="post-detail min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -439,7 +440,7 @@ export default function PostDetail() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Post Content */}
-        <Card className="border border-border bg-card mb-6">
+        <Card className="post-card border border-border bg-card mb-6">
           <CardContent className="p-0">
             {/* Hero Image */}
             <div className="relative h-80 overflow-hidden">
@@ -512,7 +513,7 @@ export default function PostDetail() {
                   <Badge
                     key={tag}
                     variant="outline"
-                    className="text-xs border-border hover:bg-accent cursor-pointer"
+                    className="text-xs border-border mypost-border tag-blue hover:bg-accent cursor-pointer"
                   >
                     #{tag}
                   </Badge>
@@ -549,7 +550,7 @@ export default function PostDetail() {
         </Card>
 
         {/* Comments Section */}
-        <Card className="border border-border bg-card">
+        <Card className="post-card border border-border bg-card">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-card-foreground">

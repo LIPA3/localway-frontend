@@ -52,7 +52,7 @@ export default function Home() {
           </Button>
         </Link>
       </div>
-      {/* <RecommendedPostsPage /> */}
+      <RecommendedPostsPage />
     </div>
   );
 }

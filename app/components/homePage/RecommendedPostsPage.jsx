@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { Heart, MessageCircle, MapPin, Search, TrendingUp } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -143,7 +144,9 @@ export function RecommendedPostsPage() {
 
   const [posts, setPosts] = useState(sortedPosts);
 
-  const handleLike = (postId) => {
+  const handleLike = (postId, event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setPosts(
       posts.map((post) =>
         post.article_id === postId
@@ -188,129 +191,134 @@ export function RecommendedPostsPage() {
       <main className="container mx-auto px-4 py-6">
         <div className="grid gap-6">
           {posts.map((post) => (
-            <Card
+            <Link
               key={post.article_id}
-              className="border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+              to={`/posts/${post.article_id}`}
+              className="block"
             >
-              <CardContent className="p-0">
-                <div className="md:flex">
-                  {/* Image */}
-                  <div className="md:w-80 h-64 md:h-auto relative">
-                    <img
-                      src={
-                        post.image || "/placeholder.svg?height=300&width=400"
-                      }
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <Badge className="bg-primary/90 text-primary-foreground">
-                        {post.category}
-                      </Badge>
+              <Card className="border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="p-0">
+                  <div className="md:flex">
+                    {/* Image */}
+                    <div className="md:w-80 h-64 md:h-auto relative">
+                      <img
+                        src={
+                          post.image || "/placeholder.svg?height=300&width=400"
+                        }
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <Badge className="bg-primary/90 text-primary-foreground">
+                          {post.category}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Content */}
-                  <div className="flex-1 p-6">
-                    {/* Author Info */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage
-                          src={post.author.avatar || "/placeholder.svg"}
-                          alt={post.author.name}
-                        />
-                        <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-card-foreground">
-                            {post.author.name}
-                          </h4>
-                          {post.author.isVerified && (
-                            <Badge variant="secondary" className="text-xs">
-                              认证
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {post.author.location}
+                    {/* Content */}
+                    <div className="flex-1 p-6">
+                      {/* Author Info */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage
+                            src={post.author.avatar || "/placeholder.svg"}
+                            alt={post.author.name}
+                          />
+                          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-card-foreground">
+                              {post.author.name}
+                            </h4>
+                            {post.author.isVerified && (
+                              <Badge variant="secondary" className="text-xs">
+                                认证
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {post.author.location}
+                            </div>
                           </div>
                         </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(post.create_time).toLocaleDateString(
+                            "zh-CN"
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(post.create_time).toLocaleDateString("zh-CN")}
+
+                      {/* Post Content */}
+                      <div className="mb-4">
+                        <h2 className="text-xl font-bold text-card-foreground mb-2 text-balance">
+                          {post.title}
+                        </h2>
+                        <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
+                          {post.content}
+                        </p>
                       </div>
-                    </div>
 
-                    {/* Post Content */}
-                    <div className="mb-4">
-                      <h2 className="text-xl font-bold text-card-foreground mb-2 text-balance">
-                        {post.title}
-                      </h2>
-                      <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
-                        {post.content}
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {post.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="text-xs border-border"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    {/* Experience Details */}
-                    <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {post.address}
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs border-border"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Badge
-                          variant="secondary"
-                          className="text-xs bg-primary/10 text-primary"
-                        >
-                          地道体验
-                        </Badge>
-                      </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleLike(post.article_id)}
-                          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                        >
-                          <Heart
-                            className={`w-4 h-4 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
-                          />
-                          {post.likes_num}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          {post.comments_num}
-                        </Button>
+                      {/* Experience Details */}
+                      <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-4 h-4" />
+                          {post.address}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-primary/10 text-primary"
+                          >
+                            地道体验
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleLike(post.article_id, e)}
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                          >
+                            <Heart
+                              className={`w-4 h-4 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
+                            />
+                            {post.likes_num}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            {post.comments_num}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </main>

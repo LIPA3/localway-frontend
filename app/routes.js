@@ -1,4 +1,5 @@
 import { index, route } from "@react-router/dev/routes";
+import { index, route } from "@react-router/dev/routes";
 
 /**
  * @type {import("@react-router/dev").RouteConfig} RouteConfig
@@ -6,6 +7,8 @@ import { index, route } from "@react-router/dev/routes";
 const routes = [
   index("routes/Home.jsx"),
   route("posts/:id", "routes/posts.$id.jsx"),
+  route("/creatorCenter", "routes/CreatorPage.jsx"),
+  route("/createArticle", "routes/CreateArticle.jsx"),
 ];
 
 export default routes;

@@ -27,6 +27,7 @@ export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(false)
+  const [totalLikes, setTotalLikes] = useState(0)
   const [pagination, setPagination] = useState({
     page: 1,
     size: 10,
@@ -36,7 +37,6 @@ export function CreatorProfilePage() {
 
   const creatorStats = {
     totalPosts: articles.length || 24,
-    totalLikes: 1250,
     totalFollowers: 890,
     totalExperiences: 18,
   }
@@ -94,10 +94,22 @@ export function CreatorProfilePage() {
     }
   }
 
+  //获得点赞数
+  const getLikesCount = async () => {
+    try {
+      const response = await api.get('users/likes/1');
+      setTotalLikes(response.data);
+      console.log('点赞数:', response.data);
+    } catch (error) {
+      console.error('获取点赞数失败:', error);
+    }
+  }
+
   // 页面加载时获取数据
   useEffect(() => {
     console.log('组件挂载，开始获取数据');
     getCreatorInfo(pagination.page, pagination.size);
+    getLikesCount();
   }, [])
 
   const myPosts = [
@@ -213,7 +225,7 @@ export function CreatorProfilePage() {
                       <div className="text-sm text-muted-foreground">发布内容</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{creatorStats.totalLikes}</div>
+                      <div className="text-2xl font-bold text-primary">{totalLikes}</div>
                       <div className="text-sm text-muted-foreground">获得点赞</div>
                     </div>
                     <div className="text-center">

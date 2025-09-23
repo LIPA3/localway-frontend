@@ -18,6 +18,14 @@ import { Card, CardContent } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
 import { Textarea } from "../components/ui/Textarea";
+import {
+  useComments,
+  useCreateComment,
+  useCreateReply,
+  useToggleArticleLike,
+  useLikeComment,
+  useUnlikeComment,
+} from "../hooks/useApi";
 import "../css/PostDetail.css";
 
 // DEMO DATA
@@ -187,74 +195,194 @@ const postsData = [
   },
 ];
 
-// Mock comments data
-const mockComments = [
-  {
-    id: 1,
-    author: {
-      name: "张小明",
-      avatar: "/user-avatar-1.jpg",
-      location: "广州",
-    },
-    content:
-      "太棒了！上周参加了这个体验，Ale老师讲解得非常详细，那几家咖啡店真的很有特色，特别是那家藏在巷子里的老店，咖啡香味至今还记得。强烈推荐给喜欢咖啡文化的朋友！",
-    publishedAt: "1小时前",
-    likes: 12,
-    isLiked: false,
-    replies: [
-      {
-        id: 11,
-        author: {
-          name: "Ale Chen",
-          avatar:
-            "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uilN86FuKAmS6s2N3SbfVfcxjEYkui.png",
-          isAuthor: true,
-        },
+// Mock user data for display
+const mockUsers = {
+  101: {
+    name: "张小明",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+    location: "广州",
+  },
+  102: {
+    name: "Ale Chen",
+    avatar:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uilN86FuKAmS6s2N3SbfVfcxjEYkui.png",
+    location: "广州",
+    isAuthor: true,
+  },
+  103: {
+    name: "小咖啡",
+    avatar:
+      "https://images.unsplash.com/photo-1494790108755-2616b612b-1a3e?w=150&h=150&fit=crop&crop=face",
+    location: "深圳",
+  },
+  104: {
+    name: "李文静",
+    avatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+    location: "深圳",
+  },
+  105: {
+    name: "旅行者",
+    avatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+    location: "北京",
+  },
+  106: {
+    name: "王大力",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+    location: "广州",
+  },
+  107: {
+    name: "陈小花",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+    location: "广州",
+  },
+  108: {
+    name: "文化探索者",
+    avatar:
+      "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face",
+    location: "上海",
+  },
+  109: {
+    name: "茶文化爱好者",
+    avatar:
+      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face",
+    location: "杭州",
+  },
+};
+
+// Helper function to get user info
+const getUserInfo = (userId) => {
+  return (
+    mockUsers[userId] || {
+      name: `User #${userId}`,
+      avatar: "/placeholder.svg",
+      location: "未知",
+    }
+  );
+};
+
+// Mock comments data matching backend ArticleCommentsResponse structure
+const mockCommentsResponse = {
+  articleId: 1,
+  commentCount: 3,
+  comments: [
+    {
+      comment: {
+        commentId: 1,
+        commentatorId: 101,
+        articleId: 1,
         content:
-          "谢谢你的支持！很高兴你喜欢这次体验，那家老店确实是我的最爱之一。",
-        publishedAt: "30分钟前",
+          "太棒了！上周参加了这个体验，Ale老师讲解得非常详细，那几家咖啡店真的很有特色，特别是那家藏在巷子里的老店，咖啡香味至今还记得。强烈推荐给喜欢咖啡文化的朋友！",
+        createTime: "2024-12-20T09:00:00.000+00:00",
       },
-    ],
-  },
-  {
-    id: 2,
-    author: {
-      name: "李文静",
-      avatar: "/user-avatar-2.jpg",
-      location: "深圳",
-    },
-    content:
-      "作为一个咖啡爱好者，这个体验让我对广州的咖啡文化有了全新的认识。不仅学到了很多咖啡知识，还了解了广州的历史文化。Ale老师人很好，讲解生动有趣。下次来广州还想参加！",
-    publishedAt: "3小时前",
-    likes: 8,
-    isLiked: true,
-    replies: [],
-  },
-  {
-    id: 3,
-    author: {
-      name: "王大力",
-      avatar: "/user-avatar-3.jpg",
-      location: "广州",
-    },
-    content:
-      "本地人表示学到了很多！原来我们身边有这么多有故事的咖啡店，以前都没注意到。这种深度体验真的很有意义，让我重新认识了自己的城市。",
-    publishedAt: "5小时前",
-    likes: 15,
-    isLiked: false,
-    replies: [
-      {
-        id: 31,
-        author: {
-          name: "陈小花",
-          avatar: "/user-avatar-4.jpg",
+      replies: [
+        {
+          replyId: 11,
+          commentId: 1,
+          replierId: 102,
+          content:
+            "谢谢你的支持！很高兴你喜欢这次体验，那家老店确实是我的最爱之一。",
+          createTime: "2024-12-20T09:30:00.000+00:00",
         },
-        content: "同感！有时候外地人比我们本地人更了解我们的城市文化呢。",
-        publishedAt: "4小时前",
+        {
+          replyId: 12,
+          commentId: 1,
+          replierId: 103,
+          content: "我也想去试试！请问那家老店叫什么名字？",
+          createTime: "2024-12-20T10:00:00.000+00:00",
+        },
+        {
+          replyId: 13,
+          commentId: 1,
+          replierId: 102,
+          content:
+            "@小咖啡 那家店叫'时光咖啡馆'，在恩宁路的一条小巷里，很容易错过。老板是个很有故事的人，做咖啡已经30多年了。",
+          createTime: "2024-12-20T10:15:00.000+00:00",
+        },
+      ],
+      replyCount: 3,
+      likeCount: 12,
+    },
+    {
+      comment: {
+        commentId: 2,
+        commentatorId: 104,
+        articleId: 1,
+        content:
+          "作为一个咖啡爱好者，这个体验让我对广州的咖啡文化有了全新的认识。不仅学到了很多咖啡知识，还了解了广州的历史文化。Ale老师人很好，讲解生动有趣。下次来广州还想参加！",
+        createTime: "2024-12-20T07:00:00.000+00:00",
       },
-    ],
-  },
-];
+      replies: [
+        {
+          replyId: 21,
+          commentId: 2,
+          replierId: 105,
+          content:
+            "同感！我也是从外地来的，这种深度体验真的比走马观花的旅游有意思多了。",
+          createTime: "2024-12-20T08:00:00.000+00:00",
+        },
+        {
+          replyId: 22,
+          commentId: 2,
+          replierId: 106,
+          content:
+            "哈哈，看到外地朋友这么认可我们广州的文化，我这个本地人都感到骄傲呢！",
+          createTime: "2024-12-20T08:30:00.000+00:00",
+        },
+      ],
+      replyCount: 2,
+      likeCount: 8,
+    },
+    {
+      comment: {
+        commentId: 3,
+        commentatorId: 106,
+        articleId: 1,
+        content:
+          "本地人表示学到了很多！原来我们身边有这么多有故事的咖啡店，以前都没注意到。这种深度体验真的很有意义，让我重新认识了自己的城市。期待有更多这样的本地文化体验！",
+        createTime: "2024-12-20T06:00:00.000+00:00",
+      },
+      replies: [
+        {
+          replyId: 31,
+          commentId: 3,
+          replierId: 107,
+          content: "同感！有时候外地人比我们本地人更了解我们的城市文化呢。",
+          createTime: "2024-12-20T06:30:00.000+00:00",
+        },
+        {
+          replyId: 32,
+          commentId: 3,
+          replierId: 108,
+          content: "广州真的有太多隐藏的文化宝藏了，需要有心人去发现和分享。",
+          createTime: "2024-12-20T07:15:00.000+00:00",
+        },
+        {
+          replyId: 33,
+          commentId: 3,
+          replierId: 109,
+          content:
+            "希望能有更多关于广州传统茶文化的体验，毕竟咖啡文化也是在茶文化基础上发展的。",
+          createTime: "2024-12-20T07:45:00.000+00:00",
+        },
+        {
+          replyId: 34,
+          commentId: 3,
+          replierId: 102,
+          content:
+            "@茶文化爱好者 好建议！我正在策划一个茶文化与咖啡文化融合的体验活动，敬请期待！",
+          createTime: "2024-12-20T08:00:00.000+00:00",
+        },
+      ],
+      replyCount: 4,
+      likeCount: 15,
+    },
+  ],
+};
 
 /**
  * PostDetail component displays the details of a single post, including its content, author information, tags, and interactive actions such as liking and commenting.
@@ -274,40 +402,28 @@ const mockComments = [
 export default function PostDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [replyContent, setReplyContent] = useState("");
-  const [commentsLoading, setCommentsLoading] = useState(true);
-  const [commentsError, setCommentsError] = useState(false);
   const [expandedComments, setExpandedComments] = useState(true);
 
   const postData = postsData.find((p) => p.article_id === parseInt(id));
 
-  const fetchComments = async () => {
-    setCommentsLoading(true);
-    setCommentsError(false);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+  // TanStack Query hooks
+  const {
+    data: comments = mockCommentsResponse, // Fallback to mock data
+    isLoading: commentsLoading,
+    isError: commentsError,
+    refetch: refetchComments,
+  } = useComments(parseInt(id));
 
-      if (!postData) {
-        throw new Error("Failed to fetch comments");
-      }
-
-      setComments(mockComments);
-    } catch (error) {
-      setCommentsError(true);
-      setComments([]);
-    } finally {
-      setCommentsLoading(false);
-    }
-  };
+  const createCommentMutation = useCreateComment();
+  const createReplyMutation = useCreateReply();
+  const toggleArticleLikeMutation = useToggleArticleLike();
+  const likeCommentMutation = useLikeComment();
+  const unlikeCommentMutation = useUnlikeComment();
 
   useEffect(() => {
-    fetchComments();
-  }, [id]);
-
-  useState(() => {
     if (postData) {
       setPost({
         ...postData,
@@ -340,6 +456,12 @@ export default function PostDetail() {
   }
 
   const handleLike = () => {
+    toggleArticleLikeMutation.mutate({
+      articleId: parseInt(id),
+      // TODO: replace with actual user ID
+      likeData: { userId: 1 },
+    });
+
     setPost({
       ...post,
       isLiked: !post.isLiked,
@@ -350,37 +472,24 @@ export default function PostDetail() {
     });
   };
 
-  const handleCommentLike = (commentId) => {
-    setComments(
-      comments.map((comment) =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-            }
-          : comment
-      )
-    );
+  const handleCommentLike = (commentId, isCurrentlyLiked) => {
+    if (isCurrentlyLiked) {
+      unlikeCommentMutation.mutate(commentId);
+    } else {
+      likeCommentMutation.mutate(commentId);
+    }
   };
 
   const handleSubmitComment = () => {
     if (newComment.trim()) {
-      const comment = {
-        id: Date.now(),
-        author: {
-          name: "当前用户",
-          avatar: "/current-user-avatar.jpg",
-          location: "广州",
-        },
+      createCommentMutation.mutate({
+        articleId: parseInt(id),
         content: newComment,
-        publishedAt: "刚刚",
-        likes: 0,
-        isLiked: false,
-        replies: [],
-      };
-      setComments([comment, ...comments]);
+        // TODO: replace with actual user ID
+        userId: 1,
+      });
       setNewComment("");
+
       setPost({
         ...post,
         stats: {
@@ -393,28 +502,12 @@ export default function PostDetail() {
 
   const handleSubmitReply = (commentId) => {
     if (replyContent.trim()) {
-      const reply = {
-        id: Date.now(),
-        author: {
-          name: "当前用户",
-          avatar: "/current-user-avatar.jpg",
-        },
+      createReplyMutation.mutate({
+        commentId,
         content: replyContent,
-        publishedAt: "刚刚",
-        likes: 0,
-        isLiked: false,
-      };
-
-      setComments(
-        comments.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                replies: [...comment.replies, reply],
-              }
-            : comment
-        )
-      );
+        // TODO: replace with actual user ID
+        userId: 1,
+      });
       setReplyContent("");
       setReplyTo(null);
     }
@@ -625,7 +718,7 @@ export default function PostDetail() {
                     <p className="text-muted-foreground mb-4">评论加载失败</p>
                     <Button
                       variant="outline"
-                      onClick={fetchComments}
+                      onClick={() => refetchComments()}
                       className="flex items-center gap-2"
                     >
                       <RefreshCw className="w-4 h-4" />
@@ -637,7 +730,7 @@ export default function PostDetail() {
                 {/* Empty Comments State */}
                 {!commentsLoading &&
                   !commentsError &&
-                  comments.length === 0 && (
+                  (!comments?.comments || comments.comments.length === 0) && (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <MessageCircle className="w-12 h-12 text-muted-foreground/50 mb-3" />
                       <p className="text-muted-foreground mb-2">暂无评论</p>
@@ -648,162 +741,221 @@ export default function PostDetail() {
                   )}
 
                 {/* Comments List */}
-                {!commentsLoading && !commentsError && comments.length > 0 && (
-                  <div className="space-y-6">
-                    {comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="border-b border-border last:border-b-0 pb-6 last:pb-0"
-                      >
-                        <div className="flex gap-3">
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage
-                              src={comment.author.avatar || "/placeholder.svg"}
-                              alt={comment.author.name}
-                            />
-                            <AvatarFallback>
-                              {comment.author.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-card-foreground">
-                                {comment.author.name}
-                              </span>
-                              {comment.author.location && (
-                                <span className="text-xs text-muted-foreground">
-                                  · {comment.author.location}
-                                </span>
-                              )}
-                              <span className="text-xs text-muted-foreground">
-                                · {comment.publishedAt}
-                              </span>
-                            </div>
-                            <p className="text-muted-foreground mb-3 leading-relaxed">
-                              {comment.content}
-                            </p>
-                            <div className="flex items-center gap-4">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCommentLike(comment.id)}
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
-                              >
-                                <ThumbsUp
-                                  className={`w-3 h-3 ${comment.isLiked ? "fill-current text-primary" : ""}`}
-                                />
-                                {comment.likes > 0 && comment.likes}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  setReplyTo(
-                                    replyTo === comment.id ? null : comment.id
-                                  )
+                {!commentsLoading &&
+                  !commentsError &&
+                  comments?.comments &&
+                  comments.comments.length > 0 && (
+                    <div className="space-y-6">
+                      {comments.comments.map((commentWithReplies) => (
+                        <div
+                          key={commentWithReplies.comment.commentId}
+                          className="border-b border-border last:border-b-0 pb-6 last:pb-0"
+                        >
+                          <div className="flex gap-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage
+                                src={
+                                  getUserInfo(
+                                    commentWithReplies.comment.commentatorId
+                                  ).avatar
                                 }
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
-                              >
-                                <Reply className="w-3 h-3" />
-                                回复
-                              </Button>
-                            </div>
-
-                            {/* Reply Form */}
-                            {replyTo === comment.id && (
-                              <div className="mt-3 flex gap-2">
-                                <Avatar className="w-6 h-6">
-                                  <AvatarImage
-                                    src="/current-user-avatar.jpg"
-                                    alt="当前用户"
-                                  />
-                                  <AvatarFallback>我</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                  <Textarea
-                                    placeholder={`回复 ${comment.author.name}...`}
-                                    value={replyContent}
-                                    onChange={(e) =>
-                                      setReplyContent(e.target.value)
-                                    }
-                                    className="min-h-[60px] resize-none border-border text-sm"
-                                  />
-                                  <div className="flex justify-end gap-2 mt-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => {
-                                        setReplyTo(null);
-                                        setReplyContent("");
-                                      }}
-                                    >
-                                      取消
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      onClick={() =>
-                                        handleSubmitReply(comment.id)
-                                      }
-                                      disabled={!replyContent.trim()}
-                                    >
-                                      回复
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Replies */}
-                            {comment.replies.length > 0 && (
-                              <div className="mt-4 space-y-3">
-                                {comment.replies.map((reply) => (
-                                  <div
-                                    key={reply.id}
-                                    className="flex gap-2 ml-4 border-l-2 border-border pl-3"
+                                alt={
+                                  getUserInfo(
+                                    commentWithReplies.comment.commentatorId
+                                  ).name
+                                }
+                              />
+                              <AvatarFallback>
+                                {getUserInfo(
+                                  commentWithReplies.comment.commentatorId
+                                ).name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-card-foreground">
+                                  {
+                                    getUserInfo(
+                                      commentWithReplies.comment.commentatorId
+                                    ).name
+                                  }
+                                </span>
+                                {getUserInfo(
+                                  commentWithReplies.comment.commentatorId
+                                ).isAuthor && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
                                   >
-                                    <Avatar className="w-6 h-6">
-                                      <AvatarImage
-                                        src={
-                                          reply.author.avatar ||
-                                          "/placeholder.svg"
+                                    作者
+                                  </Badge>
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                  {
+                                    getUserInfo(
+                                      commentWithReplies.comment.commentatorId
+                                    ).location
+                                  }
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  ·{" "}
+                                  {new Date(
+                                    commentWithReplies.comment.createTime
+                                  ).toLocaleString("zh-CN")}
+                                </span>
+                              </div>
+                              <p className="text-muted-foreground mb-3 leading-relaxed">
+                                {commentWithReplies.comment.content}
+                              </p>
+                              <div className="flex items-center gap-4">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCommentLike(
+                                      commentWithReplies.comment.commentId,
+                                      false
+                                    )
+                                  }
+                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+                                >
+                                  <ThumbsUp className="w-3 h-3" />
+                                  {commentWithReplies.likeCount || 0}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setReplyTo(
+                                      replyTo ===
+                                        commentWithReplies.comment.commentId
+                                        ? null
+                                        : commentWithReplies.comment.commentId
+                                    )
+                                  }
+                                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+                                >
+                                  <Reply className="w-3 h-3" />
+                                  回复
+                                </Button>
+                              </div>
+
+                              {/* Reply Form */}
+                              {replyTo ===
+                                commentWithReplies.comment.commentId && (
+                                <div className="mt-3 flex gap-2">
+                                  <Avatar className="w-6 h-6">
+                                    <AvatarImage
+                                      src="/current-user-avatar.jpg"
+                                      alt="当前用户"
+                                    />
+                                    <AvatarFallback>我</AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <Textarea
+                                      placeholder={`回复 ${getUserInfo(commentWithReplies.comment.commentatorId).name}...`}
+                                      value={replyContent}
+                                      onChange={(e) =>
+                                        setReplyContent(e.target.value)
+                                      }
+                                      className="min-h-[60px] resize-none border-border text-sm"
+                                    />
+                                    <div className="flex justify-end gap-2 mt-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setReplyTo(null);
+                                          setReplyContent("");
+                                        }}
+                                      >
+                                        取消
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        onClick={() =>
+                                          handleSubmitReply(
+                                            commentWithReplies.comment.commentId
+                                          )
                                         }
-                                        alt={reply.author.name}
-                                      />
-                                      <AvatarFallback>
-                                        {reply.author.name[0]}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-medium text-card-foreground text-sm">
-                                          {reply.author.name}
-                                        </span>
-                                        {reply.author.isAuthor && (
-                                          <Badge
-                                            variant="secondary"
-                                            className="text-xs"
-                                          >
-                                            作者
-                                          </Badge>
-                                        )}
-                                        <span className="text-xs text-muted-foreground">
-                                          · {reply.publishedAt}
-                                        </span>
-                                      </div>
-                                      <p className="text-muted-foreground text-sm leading-relaxed">
-                                        {reply.content}
-                                      </p>
+                                        disabled={!replyContent.trim()}
+                                      >
+                                        回复
+                                      </Button>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                </div>
+                              )}
+
+                              {/* Replies */}
+                              {commentWithReplies.replies &&
+                                commentWithReplies.replies.length > 0 && (
+                                  <div className="mt-4 space-y-3">
+                                    {commentWithReplies.replies.map((reply) => (
+                                      <div
+                                        key={reply.replyId}
+                                        className="flex gap-2 ml-4 border-l-2 border-border pl-3"
+                                      >
+                                        <Avatar className="w-6 h-6">
+                                          <AvatarImage
+                                            src={
+                                              getUserInfo(reply.replierId)
+                                                .avatar
+                                            }
+                                            alt={
+                                              getUserInfo(reply.replierId).name
+                                            }
+                                          />
+                                          <AvatarFallback>
+                                            {getUserInfo(
+                                              reply.replierId
+                                            ).name.charAt(0)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium text-card-foreground text-sm">
+                                              {
+                                                getUserInfo(reply.replierId)
+                                                  .name
+                                              }
+                                            </span>
+                                            {getUserInfo(reply.replierId)
+                                              .isAuthor && (
+                                              <Badge
+                                                variant="secondary"
+                                                className="text-xs"
+                                              >
+                                                作者
+                                              </Badge>
+                                            )}
+                                            <span className="text-xs text-muted-foreground">
+                                              {
+                                                getUserInfo(reply.replierId)
+                                                  .location
+                                              }
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                              ·{" "}
+                                              {new Date(
+                                                reply.createTime
+                                              ).toLocaleString("zh-CN")}
+                                            </span>
+                                          </div>
+                                          <p className="text-muted-foreground text-sm leading-relaxed">
+                                            {reply.content}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
               </>
             )}
           </CardContent>

@@ -1,5 +1,4 @@
 import { index, route } from "@react-router/dev/routes";
-import { index, route } from "@react-router/dev/routes";
 
 /**
  * @type {import("@react-router/dev").RouteConfig} RouteConfig

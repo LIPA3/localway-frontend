@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { Heart, MessageCircle, MapPin, Search, TrendingUp } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  MapPin,
+  Search,
+  TrendingUp,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Card, CardContent } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar";
+import { useArticles, useToggleArticleLike } from "../../hooks/useApi";
 
 // DEMO DATA
 const recommendedPosts = [
@@ -135,30 +143,60 @@ const recommendedPosts = [
 
 export function RecommendedPostsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const sortedPosts = [...recommendedPosts].sort((a, b) => {
-    if (a.author.isVerified !== b.author.isVerified) {
-      return b.author.isVerified - a.author.isVerified;
-    }
-    return b.likes_num - a.likes_num;
-  });
+  const [page] = useState(0);
+  const [size] = useState(20);
 
-  const [posts, setPosts] = useState(sortedPosts);
+  // Use TanStack Query to fetch articles
+  const {
+    data: articles = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useArticles(page, size, searchQuery);
 
-  const handleLike = (postId, event) => {
+  const toggleArticleLikeMutation = useToggleArticleLike();
+
+  // Search with debouncing could be added here
+  useEffect(() => {
+    // Could add debounced search logic here
+  }, [searchQuery]);
+
+  const handleLike = (articleId, event) => {
     event.preventDefault();
     event.stopPropagation();
-    setPosts(
-      posts.map((post) =>
-        post.article_id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes_num: post.isLiked ? post.likes_num - 1 : post.likes_num + 1,
-            }
-          : post
-      )
-    );
+
+    toggleArticleLikeMutation.mutate({
+      articleId,
+      likeData: { userId: 1 }, // Replace with actual user ID
+    });
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          正在加载文章...
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">
+            加载失败: {error?.message || "未知错误"}
+          </p>
+          <Button onClick={() => refetch()}>重试</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home-page min-h-screen bg-background">
@@ -190,10 +228,10 @@ export function RecommendedPostsPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <div className="grid gap-6">
-          {posts.map((post) => (
+          {articles.map((article) => (
             <Link
-              key={post.article_id}
-              to={`/posts/${post.article_id}`}
+              key={article.articleId}
+              to={`/posts/${article.articleId}`}
               className="block"
             >
               <Card className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
@@ -203,73 +241,67 @@ export function RecommendedPostsPage() {
                     <div className="md:w-80 h-64 md:h-auto relative">
                       <img
                         src={
-                          post.image || "/placeholder.svg?height=300&width=400"
+                          article.image ||
+                          "/placeholder.svg?height=300&width=400"
                         }
-                        alt={post.title}
+                        alt={article.title}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-3 left-3">
                         <Badge className="bg-primary/90 text-primary-foreground">
-                          {post.category}
+                          {article.tagList?.[0]?.name || "体验"}
                         </Badge>
                       </div>
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 p-6">
-                      {/* Author Info */}
+                      {/* Author Info - Note: Backend doesn't provide author info, using placeholder */}
                       <div className="flex items-center gap-3 mb-4">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage
-                            src={post.author.avatar || "/placeholder.svg"}
-                            alt={post.author.name}
-                          />
-                          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                          <AvatarImage src="/placeholder.svg" alt="Author" />
+                          <AvatarFallback>U</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium text-card-foreground">
-                              {post.author.name}
+                              Creator #{article.creatorId || "Unknown"}
                             </h4>
-                            {post.author.isVerified && (
-                              <Badge variant="secondary" className="text-xs">
-                                认证
-                              </Badge>
-                            )}
+                            <Badge variant="secondary" className="text-xs">
+                              认证
+                            </Badge>
                           </div>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {post.author.location}
+                              {article.address || "位置未知"}
                             </div>
                           </div>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(post.create_time).toLocaleDateString(
-                            "zh-CN"
-                          )}
+                          最近发布
                         </div>
                       </div>
 
                       {/* Post Content */}
                       <div className="mb-4">
                         <h2 className="text-xl font-bold text-card-foreground mb-2 text-balance">
-                          {post.title}
+                          {article.title}
                         </h2>
                         <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
-                          {post.content}
+                          {article.content}
                         </p>
                       </div>
 
                       {/* Tags */}
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {post.tags.map((tag) => (
+                        {article.tagList?.map((tag) => (
                           <Badge
-                            key={tag}
+                            key={tag.tagId}
                             variant="outline"
-                            className="text-xs border-border mypost-border tag-blue"
+                            className="text-xs border-muted"
                           >
-                            {tag}
+                            {tag.name}
                           </Badge>
                         ))}
                       </div>
@@ -278,7 +310,7 @@ export function RecommendedPostsPage() {
                       <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          {post.address}
+                          {article.address || "地址未提供"}
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge
@@ -296,13 +328,11 @@ export function RecommendedPostsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => handleLike(post.article_id, e)}
+                            onClick={(e) => handleLike(article.articleId, e)}
                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                           >
-                            <Heart
-                              className={`w-4 h-4 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
-                            />
-                            {post.likes_num}
+                            <Heart className="w-4 h-4" />
+                            {article.likesNum || 0}
                           </Button>
                           <Button
                             variant="ghost"
@@ -310,7 +340,7 @@ export function RecommendedPostsPage() {
                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                           >
                             <MessageCircle className="w-4 h-4" />
-                            {post.comments_num}
+                            {article.commentsNum || 0}
                           </Button>
                         </div>
                       </div>

@@ -11,6 +11,7 @@ import {
   getArticlesByCreatorId,
   getUserInfo,
   getUserLikedArticles,
+  getUserLikedComments,
 } from "../api/Api";
 
 // Articles hooks
@@ -76,6 +77,14 @@ export const useCreateComment = () => {
       // Invalidate and refetch comments for the article
       queryClient.invalidateQueries(["comments", variables.articleId]);
     },
+  });
+};
+
+export const useUserLikedComments = (userId) => {
+  return useQuery({
+    queryKey: ["likes/comments", userId],
+    queryFn: () => getUserLikedComments(userId),
+    enabled: !!userId,
   });
 };
 

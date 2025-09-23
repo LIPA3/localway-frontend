@@ -59,6 +59,12 @@ export const getUserLikedArticles = async (userId) => {
   return response.data;
 }
 
+// Get user's liked comments
+export const getUserLikedComments = async (userId) => {
+  const response = await apiClient.get(`/likes/comments/${userId}`);
+  return response.data;
+}
+
 // Comments API
 export const getCommentsByArticleId = async (articleId) => {
   const response = await apiClient.get(`/comments/${articleId}`);

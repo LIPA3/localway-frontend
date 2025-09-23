@@ -99,12 +99,16 @@ export const toggleArticleLike = async (articleId, likeData) => {
 };
 
 // Comment likes API
-export const likeComment = async (commentId) => {
-  const response = await apiClient.post(`/likes/comments/${commentId}`);
+export const likeComment = async (commentId, userId) => {
+  const response = await apiClient.post(`/likes/comments/${commentId}`,
+    userId
+  );
   return response.data;
 };
 
-export const unlikeComment = async (commentId) => {
-  const response = await apiClient.delete(`/likes/comments/${commentId}`);
+export const unlikeComment = async (commentId, userId) => {
+  const response = await apiClient.delete(`/likes/comments/${commentId}`,
+    userId
+  );
   return response.data;
 };

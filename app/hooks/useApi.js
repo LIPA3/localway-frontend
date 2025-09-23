@@ -119,10 +119,10 @@ export const useLikeComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: likeComment,
-    onSuccess: (data, commentId) => {
-      // Invalidate comments to refresh like counts
+    mutationFn: ({ commentId, userId }) => likeComment(commentId, userId),
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["comments"]);
+      queryClient.invalidateQueries(["likes/comments", variables.userId]);
     },
   });
 };
@@ -131,10 +131,11 @@ export const useUnlikeComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: unlikeComment,
-    onSuccess: (data, commentId) => {
-      // Invalidate comments to refresh like counts
+    mutationFn: ({ commentId, userId }) => unlikeComment(commentId, userId),
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["comments"]);
+      queryClient.invalidateQueries(["likes/comments", variables.userId]);
     },
   });
 };
+

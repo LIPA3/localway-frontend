@@ -10,6 +10,7 @@ import {
   createArticle,
   getArticlesByCreatorId,
   getUserInfo,
+  getUserLikedArticles,
 } from "../api/Api";
 
 // Articles hooks
@@ -45,6 +46,14 @@ export const useUserInfo = (userId) => {
   return useQuery({
     queryKey: ["user", userId],
     queryFn: () => getUserInfo(userId),
+    enabled: !!userId,
+  });
+};
+
+export const useUserLikedArticles = (userId) => {
+  return useQuery({
+    queryKey: ["likes/articles", userId],
+    queryFn: () => getUserLikedArticles(userId),
     enabled: !!userId,
   });
 };

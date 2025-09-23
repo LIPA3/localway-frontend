@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // API base configuration
-const API_BASE_URL = {$RAILWAY_PUBLIC_DOMAIN};
+const API_BASE_URL = {$RAILWAY_BACKEND};
 
 export let apiClient = axios.create({
   baseURL: API_BASE_URL,

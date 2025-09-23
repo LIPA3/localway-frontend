@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import axios from "axios"
 import { PenTool, ImageIcon, MapPin, Tag, Save, Send, Plus, X, Upload, Clock, Users, Star } from "lucide-react"
 import { Button } from "../ui/Button"
 import { Input } from "../ui/Input"
@@ -12,22 +11,22 @@ import { Label } from "../ui/Label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import "../../css/CreateArticle.css"
+import api from "../../api/api.js"
 
-const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
 
 export function CreatorContentPage() {
+  const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
+
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
   const [tags, setTags] = useState([])
   const [newTag, setNewTag] = useState("")
-  const [duration, setDuration] = useState("")
-  // const [maxParticipants, setMaxParticipants] = useState("")
   const [activeTab, setActiveTab] = useState("edit")
   
   // 图片上传相关状态
-  const [uploadedImages, setUploadedImages] = useState([])
+  const [uploadedImage, setUploadedImage] = useState("")
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   
@@ -55,10 +54,12 @@ export function CreatorContentPage() {
 
   // 图片上传函数
   const handleImageUpload = async (file) => {
-    // 检查图片数量限制
-    if (uploadedImages.length >= 9) {
-      alert('最多只能上传9张图片')
-      return
+    // 如果已有图片，先清除
+    if (uploadedImage) {
+      const confirmReplace = window.confirm('已有图片，是否替换？')
+      if (!confirmReplace) {
+        return
+      }
     }
 
     setUploading(true)
@@ -67,9 +68,14 @@ export function CreatorContentPage() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('type', 'experience') // 体验图片类型
       
-      const response = await axios.post('http://localhost:8080/oss/uploadImg', formData, {
+      console.log('准备上传文件:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      })
+      
+      const response = await api.post('oss/uploadImg', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -81,17 +87,17 @@ export function CreatorContentPage() {
         },
       })
 
-      if (response.data.success) {
-        const newImage = {
-          id: Date.now(),
-          url: response.data.url,
-          name: file.name,
-          size: file.size
-        }
-        setUploadedImages(prev => [...prev, newImage])
+      console.log('上传响应:', response)
+
+      if (response.status === 200) {
+        setUploadedImage(response.data.url)
         console.log('图片上传成功:', response.data.url)
+      } else if (response.data && response.data.data) {
+        // 有些API可能直接返回URL在data字段中
+        setUploadedImage(response.data.data)
+        console.log('图片上传成功:', response.data.data)
       } else {
-        throw new Error(response.data.message || '上传失败')
+        throw new Error(response.data?.message || '上传失败')
       }
     } catch (error) {
       console.error('图片上传失败:', error)
@@ -104,29 +110,28 @@ export function CreatorContentPage() {
 
   // 处理文件选择
   const handleFileSelect = (event) => {
-    const files = Array.from(event.target.files)
+    const file = event.target.files[0] // 只取第一个文件
 
+    if (!file) return
     
-    files.forEach(file => {
-      // 验证文件类型
-      if (!file.type.startsWith('image/')) {
-        alert('请选择图片文件')
-        return
-      }
-      
-      // 验证文件大小 (5MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert('图片大小不能超过5MB')
-        return
-      }
-      
-      handleImageUpload(file)
-    })
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      alert('请选择图片文件')
+      return
+    }
+    
+    // 验证文件大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片大小不能超过5MB')
+      return
+    }
+    
+    handleImageUpload(file)
   }
 
   // 删除图片
-  const removeImage = (imageId) => {
-    setUploadedImages(prev => prev.filter(img => img.id !== imageId))
+  const removeImage = () => {
+    setUploadedImage("")
   }
 
   // 发布体验函数
@@ -148,8 +153,8 @@ export function CreatorContentPage() {
     }
     
     // 可选：图片验证（如果要求必须有图片，可以取消注释）
-    // if (uploadedImages.length === 0) {
-    //   alert('请至少上传一张图片')
+    // if (!uploadedImage) {
+    //   alert('请上传一张图片')
     //   return
     // }
 
@@ -160,33 +165,22 @@ export function CreatorContentPage() {
         creatorId: 1, // TODO: 替换为实际用户ID
         title: title.trim(),
         content: content.trim(),
-        location: selectedLocation,
-        // category: selectedCategory,
-        tags: [
-          { tagName: "a" },
-          { tagName: "c" }
-        ],
-        images: "string",
-        // duration: duration,
+        address: selectedLocation,
+        tags: tags.map(tag => ({ tagName: tag })), // 使用用户输入的标签
+        image: uploadedImage, // 单个图片字符串
         // status: 'published', // 发布状态
-        createdAt: new Date().toISOString()
+        // createdAt: new Date().toISOString()
       }
 
-      const response = await axios.post('http://localhost:8080/articles', experienceData, {
-        headers: {
-          'Content-Type': 'application/json',
-          // 如果需要认证，添加 Authorization header
-          // 'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await api.post('articles', experienceData)
 
-      if (response.data.success) {
+      if (response.status === 200) {
         setPublishSuccess(true)
         alert('体验发布成功！')
         
         // 重置表单或跳转到体验详情页
         // 可以根据需要导航到发布成功页面
-        console.log('发布成功，体验ID:', response.data.experienceId)
+        console.log('发布成功')
         
         // 清空表单
         setTitle('')
@@ -194,10 +188,10 @@ export function CreatorContentPage() {
         setSelectedCategory('')
         setSelectedLocation('')
         setTags([])
-        setUploadedImages([])
-        setDuration('')
+        setUploadedImage('')
         
       } else {
+        console.log(response)
         throw new Error(response.data.message || '发布失败')
       }
       
@@ -230,12 +224,10 @@ export function CreatorContentPage() {
     e.preventDefault()
     e.stopPropagation()
     
-    const files = Array.from(e.dataTransfer.files)
-    files.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        handleImageUpload(file)
-      }
-    })
+    const file = e.dataTransfer.files[0] // 只取第一个文件
+    if (file && file.type.startsWith('image/')) {
+      handleImageUpload(file)
+    }
   }
 
   return (
@@ -305,9 +297,13 @@ export function CreatorContentPage() {
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="选择城市" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="opacity-100 bg-white">
                           {locations.map((location) => (
-                            <SelectItem key={location} value={location}>
+                            <SelectItem 
+                              key={location} 
+                              value={location}
+                              className="hover:bg-blue-100 hover:text-blue-900 cursor-pointer transition-colors duration-200"
+                            >
                               {location}
                             </SelectItem>
                           ))}
@@ -361,13 +357,12 @@ export function CreatorContentPage() {
                   >
                     <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-2">点击上传或拖拽图片到此处</p>
-                    <p className="text-sm text-muted-foreground">支持 JPG、PNG 格式，最大5MB，最多9张图片</p>
+                    <p className="text-sm text-muted-foreground">支持 JPG、PNG 格式，最大5MB</p>
                     <p className="text-sm text-muted-foreground">建议尺寸 1200x800px</p>
                     
                     <input
                       type="file"
                       id="imageUpload"
-                      multiple
                       accept="image/*"
                       onChange={handleFileSelect}
                       className="hidden"
@@ -377,13 +372,13 @@ export function CreatorContentPage() {
                       variant="outline" 
                       className="mt-4 bg-transparent"
                       onClick={() => document.getElementById('imageUpload').click()}
-                      disabled={uploading || uploadedImages.length >= 9}
+                      disabled={uploading || uploadedImage}
                     >
                       {uploading 
                         ? `上传中 ${uploadProgress}%` 
-                        : uploadedImages.length >= 9 
-                          ? '已达上限(9张)'
-                          : `选择图片 (${uploadedImages.length}/9)`
+                        : uploadedImage 
+                          ? '已上传图片'
+                          : '选择图片'
                       }
                     </Button>
                   </div>
@@ -400,34 +395,22 @@ export function CreatorContentPage() {
                     </div>
                   )}
 
-                  {/* 已上传的图片列表 */}
-                  {uploadedImages.length > 0 && (
+                  {/* 已上传的图片显示 */}
+                  {uploadedImage && (
                     <div className="mt-6">
-                      <h4 className="text-sm font-medium mb-3">
-                        已上传的图片 ({uploadedImages.length}/9)
-                        {uploadedImages.length >= 9 && (
-                          <span className="text-orange-600 ml-2">已达上限</span>
-                        )}
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {uploadedImages.map((image) => (
-                          <div key={image.id} className="image-item relative group">
-                            <img
-                              src={image.url}
-                              alt={image.name}
-                              className="w-full h-24 object-cover rounded-lg border"
-                            />
-                            <button
-                              onClick={() => removeImage(image.id)}
-                              className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                            <div className="mt-1 text-xs text-muted-foreground truncate">
-                              {image.name}
-                            </div>
-                          </div>
-                        ))}
+                      <h4 className="text-sm font-medium mb-3">已上传的图片</h4>
+                      <div className="image-item relative group max-w-xs">
+                        <img
+                          src={uploadedImage}
+                          alt="上传的图片"
+                          className="w-full h-32 object-cover rounded-lg border"
+                        />
+                        <button
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
                   )}
@@ -472,9 +455,17 @@ export function CreatorContentPage() {
               {/* Preview Card */}
               <Card className="max-w-md mx-auto">
                 <CardContent className="p-0">
-                  {/* Preview Image Placeholder */}
-                  <div className="aspect-[4/3] bg-muted rounded-t-lg flex items-center justify-center">
-                    <ImageIcon className="w-12 h-12 text-muted-foreground" />
+                  {/* Preview Image */}
+                  <div className="aspect-[4/3] bg-muted rounded-t-lg flex items-center justify-center overflow-hidden">
+                    {uploadedImage ? (
+                      <img 
+                        src={uploadedImage} 
+                        alt="预览图片" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="w-12 h-12 text-muted-foreground" />
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -496,21 +487,6 @@ export function CreatorContentPage() {
                           {selectedLocation}
                         </div>
                       )}
-{/* 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {duration && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {duration}
-                          </div>
-                        )}
-                        {maxParticipants && (
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            最多{maxParticipants}
-                          </div>
-                        )}
-                      </div> */}
                     </div>
 
                     {/* Description Preview */}

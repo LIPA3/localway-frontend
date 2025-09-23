@@ -116,16 +116,17 @@ export const toggleArticleLike = async (articleId, likeData) => {
 };
 
 // Comment likes API
-export const likeComment = async (commentId, userId) => {
-  const response = await apiClient.post(`/likes/comments/${commentId}`,
-    userId
-  );
+export const likeComment = async (commentId, commentLikeRequest) => {
+  const response = await apiClient.post(`/likes/comments/${commentId}`, commentLikeRequest);
   return response.data;
 };
 
-export const unlikeComment = async (commentId, userId) => {
-  const response = await apiClient.delete(`/likes/comments/${commentId}`,
-    userId
-  );
+export const unlikeComment = async (commentId, commentLikeRequest) => {
+  const response = await apiClient.delete(`/likes/comments/${commentId}`, {
+    data: commentLikeRequest
+  });
   return response.data;
 };
+
+// Export the configured axios instance as default for backward compatibility
+export default apiClient;

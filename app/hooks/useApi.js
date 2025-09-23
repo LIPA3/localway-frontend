@@ -59,6 +59,14 @@ export const useUserLikedArticles = (userId) => {
   });
 };
 
+export const useUserLikedComments = (userId) => {
+  return useQuery({
+    queryKey: ["likes/comments", userId],
+    queryFn: () => getUserLikedComments(userId),
+    enabled: !!userId,
+  });
+};
+
 // Comments hooks
 export const useComments = (articleId) => {
   return useQuery({
@@ -77,14 +85,6 @@ export const useCreateComment = () => {
       // Invalidate and refetch comments for the article
       queryClient.invalidateQueries(["comments", variables.articleId]);
     },
-  });
-};
-
-export const useUserLikedComments = (userId) => {
-  return useQuery({
-    queryKey: ["likes/comments", userId],
-    queryFn: () => getUserLikedComments(userId),
-    enabled: !!userId,
   });
 };
 
@@ -108,8 +108,8 @@ export const useToggleArticleLike = () => {
     mutationFn: ({ articleId, likeData }) =>
       toggleArticleLike(articleId, likeData),
     onSuccess: () => {
-      // Invalidate any relevant queries that might show like counts
-      queryClient.invalidateQueries(["articles"]);
+      // Invalidate user liked articles to refresh the state
+      queryClient.invalidateQueries(["likes/articles"]);
     },
   });
 };
@@ -119,10 +119,13 @@ export const useLikeComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, userId }) => likeComment(commentId, userId),
-    onSuccess: (data, variables) => {
+    mutationFn: ({ commentId, commentLikeRequest }) =>
+      likeComment(commentId, commentLikeRequest),
+    onSuccess: () => {
+      // Invalidate user liked comments to refresh the state
+      queryClient.invalidateQueries(["likes/comments"]);
+      // Also invalidate comments to refresh like counts
       queryClient.invalidateQueries(["comments"]);
-      queryClient.invalidateQueries(["likes/comments", variables.userId]);
     },
   });
 };
@@ -131,11 +134,13 @@ export const useUnlikeComment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ commentId, userId }) => unlikeComment(commentId, userId),
-    onSuccess: (data, variables) => {
+    mutationFn: ({ commentId, commentLikeRequest }) =>
+      unlikeComment(commentId, commentLikeRequest),
+    onSuccess: () => {
+      // Invalidate user liked comments to refresh the state
+      queryClient.invalidateQueries(["likes/comments"]);
+      // Also invalidate comments to refresh like counts
       queryClient.invalidateQueries(["comments"]);
-      queryClient.invalidateQueries(["likes/comments", variables.userId]);
     },
   });
 };
-

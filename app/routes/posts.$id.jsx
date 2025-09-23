@@ -26,6 +26,7 @@ import {
   useUnlikeComment,
   useUserInfo,
   useUserLikedArticles,
+  useUserLikedComments,
 } from "../hooks/useApi";
 import "../css/PostDetail.css";
 
@@ -55,13 +56,12 @@ export default function PostDetail() {
   // TODO: Replace with actual userId from auth context/session
   const currentUserId = 1;
 
-  // Get article data from router state
   const article = location.state?.article;
 
-  // Fetch user's liked articles
   const {data: userLikedList} = useUserLikedArticles(currentUserId);
 
-  // Fetch article creator info
+  const { data: userLikedComments } = useUserLikedComments(currentUserId);
+
   const {data: creatorInfo} = useUserInfo(article?.creatorId);
 
   // Fetch comments
@@ -72,22 +72,17 @@ export default function PostDetail() {
     refetch: refetchComments,
   } = useComments(parseInt(id));
 
-  // Update liked articles when user liked list changes
   useEffect(() => {
     if (userLikedList && userLikedList.articleIds && Array.isArray(userLikedList.articleIds)) {
       setLikedArticles(new Set(userLikedList.articleIds));
     }
   }, [userLikedList]);
 
-  // Initialize liked comments state when comments load
   useEffect(() => {
-    if (comments?.comments) {
-      // TODO: This should be replaced with actual API call to get user's liked comments
-      // For now, we'll track likes locally
-      const initialLikedComments = new Set();
-      setLikedComments(initialLikedComments);
+    if (userLikedComments && Array.isArray(userLikedComments.commentIds)) {
+      setLikedComments(new Set(userLikedComments.commentIds));
     }
-  }, [comments]);
+  }, [userLikedComments]);
 
   // Mutations
   const createCommentMutation = useCreateComment();
@@ -163,16 +158,14 @@ export default function PostDetail() {
     });
 
     if (isCurrentlyLiked) {
-      unlikeCommentMutation.mutate(commentId, {
+      unlikeCommentMutation.mutate({ commentId, userId: currentUserId }, {
         onError: () => {
-          // Revert on error
           setLikedComments(prev => new Set(prev).add(commentId));
         }
       });
     } else {
-      likeCommentMutation.mutate(commentId, {
+      likeCommentMutation.mutate({ commentId, userId: currentUserId }, {
         onError: () => {
-          // Revert on error
           setLikedComments(prev => {
             const newSet = new Set(prev);
             newSet.delete(commentId);

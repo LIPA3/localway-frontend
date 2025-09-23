@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   User,
   Settings,
@@ -25,25 +25,80 @@ import api from "../../api/api";
 
 export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    size: 10,
+    total: 0,
+    totalPages: 0
+  })
 
   const creatorStats = {
-    totalPosts: 24,
+    totalPosts: articles.length || 24,
     totalLikes: 1250,
     totalFollowers: 890,
     totalExperiences: 18,
   }
- const getCreatorInfo = async () => {
+
+  const getCreatorInfo = async (page = 1, size = 10) => {
     try {
-      const response = await api.get('articles/queryPage');
-      if (!response.ok) {
-        throw new Error('网络错误');
+      setLoading(true)
+      console.log('正在获取创作者信息...', { page, size });
+      
+      const response = await api.get('articles/queryPage', {
+        params: {
+          page: page,
+          size: size
+        }
+      });
+      
+      console.log('API响应:', response);
+      console.log('响应数据:', response.data);
+      
+      if (response.data) {
+        // 根据实际后端返回的数据结构调整
+        const data = response.data;
+        
+        // 如果是直接返回数组
+        if (Array.isArray(data)) {
+          setArticles(data);
+          setPagination(prev => ({
+            ...prev,
+            total: data.length
+          }));
+        } 
+        // 如果是分页对象结构
+        else if (data.records || data.content || data.data) {
+          const records = data.records || data.content || data.data || [];
+          setArticles(records);
+          setPagination({
+            page: data.current || data.number || page,
+            size: data.size || size,
+            total: data.total || data.totalElements || records.length,
+            totalPages: data.pages || data.totalPages || Math.ceil((data.total || records.length) / size)
+          });
+        }
+        // 如果直接是数据对象
+        else {
+          setArticles([data]);
+        }
+        
+        console.log('设置的文章数据:', articles);
       }
-      const data = await response.json();
-      console.log('创作者信息:', data);
     } catch (error) {
       console.error('获取创作者信息失败:', error);
+      console.error('错误详情:', error.response?.data);
+    } finally {
+      setLoading(false)
     }
   }
+
+  // 页面加载时获取数据
+  useEffect(() => {
+    console.log('组件挂载，开始获取数据');
+    getCreatorInfo(pagination.page, pagination.size);
+  }, [])
 
   const myPosts = [
     {
@@ -195,61 +250,131 @@ export function CreatorProfilePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myPosts.map((post) => (
-                  <Card key={post.id} className="post-card overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
-                        src={post.image || "/placeholder.svg"}
-                        alt={post.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs mypost-border">
-                          {post.category}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{post.createdAt}</span>
+                {loading ? (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-muted-foreground">加载中...</p>
+                  </div>
+                ) : articles.length > 0 ? (
+                  articles.map((post) => (
+                    <Card key={post.id} className="post-card overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={post.image || post.coverImage || "/placeholder.svg"}
+                          alt={post.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
                       </div>
-
-                      <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
-
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                        <MapPin className="w-3 h-3" />
-                        <span>{post.location}</span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs mypost-border tag-blue">
-                            {tag}
+                      <CardContent className="p-4">
+                        {/* <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="text-xs mypost-border">
+                            {post.category || post.type || "默认分类"}
                           </Badge>
-                        ))}
-                        {post.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs mypost-border tag-blue">
-                            +{post.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
+                          <span className="text-xs text-muted-foreground">
+                            {post.createdAt || post.createTime || "未知时间"}
+                          </span>
+                        </div> */}
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Heart className="w-4 h-4" />
-                            <span>{post.likes}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{post.comments}</span>
-                          </div>
+                        <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
+
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+                          <MapPin className="w-3 h-3" />
+                          <span>{post.address || "未知地点"}</span>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
+
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {(post.tagList || []).slice(0, 3).map((tag) => (
+                            <Badge key={tag.tagId} variant="outline" className="text-xs mypost-border tag-blue">
+                              {tag.tagName}
+                            </Badge>
+                          ))}
+                          {(post.tagList || []).length > 3 && (
+                            <Badge variant="outline" className="text-xs mypost-border tag-blue">
+                              +{(post.tagList || []).length - 3}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Heart className="w-4 h-4" />
+                              <span>{post.likesNum || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageCircle className="w-4 h-4" />
+                              <span>{post.commentsNum || 0}</span>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-muted-foreground">暂无文章数据</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 分页控制 */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page <= 1 || loading}
+                    onClick={() => getCreatorInfo(pagination.page - 1, pagination.size)}
+                  >
+                    上一页
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, index) => {
+                      const pageNum = index + 1;
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={pagination.page === pageNum ? "default" : "outline"}
+                          size="sm"
+                          disabled={loading}
+                          onClick={() => getCreatorInfo(pageNum, pagination.size)}
+                        >
+                          {pageNum}
                         </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      );
+                    })}
+                    {pagination.totalPages > 5 && (
+                      <>
+                        <span className="text-muted-foreground">...</span>
+                        <Button
+                          variant={pagination.page === pagination.totalPages ? "default" : "outline"}
+                          size="sm"
+                          disabled={loading}
+                          onClick={() => getCreatorInfo(pagination.totalPages, pagination.size)}
+                        >
+                          {pagination.totalPages}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page >= pagination.totalPages || loading}
+                    onClick={() => getCreatorInfo(pagination.page + 1, pagination.size)}
+                  >
+                    下一页
+                  </Button>
+                </div>
+              )}
+
+              {/* 分页信息显示 */}
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                共 {pagination.total} 篇文章，第 {pagination.page} 页 / 共 {pagination.totalPages} 页
               </div>
             </TabsContent>
 

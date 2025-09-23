@@ -28,12 +28,6 @@ export function CreatorProfilePage() {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(false)
   const [totalLikes, setTotalLikes] = useState(0)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    size: 10,
-    total: 0,
-    totalPages: 0
-  })
 
   const creatorStats = {
     totalPosts: articles.length || 24,
@@ -41,17 +35,11 @@ export function CreatorProfilePage() {
     totalExperiences: 18,
   }
 
-  const getCreatorInfo = async (page = 1, size = 10) => {
+  const getCreatorInfo = async () => {
     try {
       setLoading(true)
-      console.log('正在获取创作者信息...', { page, size });
       
-      const response = await api.get('articles/queryPage', {
-        params: {
-          page: page,
-          size: size
-        }
-      });
+      const response = await api.get('articles/1');
       
       console.log('API响应:', response);
       console.log('响应数据:', response.data);
@@ -108,45 +96,9 @@ export function CreatorProfilePage() {
   // 页面加载时获取数据
   useEffect(() => {
     console.log('组件挂载，开始获取数据');
-    getCreatorInfo(pagination.page, pagination.size);
+    getCreatorInfo();
     getLikesCount();
   }, [])
-
-  const myPosts = [
-    {
-      id: 1,
-      title: "广州老城区的咖啡文化探索",
-      image: "/guangzhou-old-city-coffee-culture.jpg",
-      category: "咖啡文化",
-      location: "广州",
-      likes: 234,
-      comments: 45,
-      tags: ["地道", "本地化", "咖啡", "历史", "本地文化", "老城区"],
-      createdAt: "2天前",
-    },
-    {
-      id: 2,
-      title: "成都街头巷尾的茶馆文化",
-      image: "/chengdu-teahouse-culture-street.jpg",
-      category: "茶文化",
-      location: "成都",
-      likes: 189,
-      comments: 32,
-      tags: ["地道", "本地化", "茶文化", "成都", "街头文化"],
-      createdAt: "5天前",
-    },
-    {
-      id: 3,
-      title: "北京胡同里的传统手工艺",
-      image: "/beijing-hutong-traditional-crafts.jpg",
-      category: "传统手工",
-      location: "北京",
-      likes: 156,
-      comments: 28,
-      tags: ["地道", "本地化", "手工艺", "胡同", "传统文化"],
-      createdAt: "1周前",
-    },
-  ]
 
   return (
     <div className="creator-page min-h-screen bg-background">
@@ -277,14 +229,6 @@ export function CreatorProfilePage() {
                         />
                       </div>
                       <CardContent className="p-4">
-                        {/* <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="secondary" className="text-xs mypost-border">
-                            {post.category || post.type || "默认分类"}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {post.createdAt || post.createTime || "未知时间"}
-                          </span>
-                        </div> */}
 
                         <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
 
@@ -329,64 +273,6 @@ export function CreatorProfilePage() {
                     <p className="text-muted-foreground">暂无文章数据</p>
                   </div>
                 )}
-              </div>
-
-              {/* 分页控制 */}
-              {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={pagination.page <= 1 || loading}
-                    onClick={() => getCreatorInfo(pagination.page - 1, pagination.size)}
-                  >
-                    上一页
-                  </Button>
-                  
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, index) => {
-                      const pageNum = index + 1;
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={pagination.page === pageNum ? "default" : "outline"}
-                          size="sm"
-                          disabled={loading}
-                          onClick={() => getCreatorInfo(pageNum, pagination.size)}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                    {pagination.totalPages > 5 && (
-                      <>
-                        <span className="text-muted-foreground">...</span>
-                        <Button
-                          variant={pagination.page === pagination.totalPages ? "default" : "outline"}
-                          size="sm"
-                          disabled={loading}
-                          onClick={() => getCreatorInfo(pagination.totalPages, pagination.size)}
-                        >
-                          {pagination.totalPages}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={pagination.page >= pagination.totalPages || loading}
-                    onClick={() => getCreatorInfo(pagination.page + 1, pagination.size)}
-                  >
-                    下一页
-                  </Button>
-                </div>
-              )}
-
-              {/* 分页信息显示 */}
-              <div className="text-center text-sm text-muted-foreground mt-4">
-                共 {pagination.total} 篇文章，第 {pagination.page} 页 / 共 {pagination.totalPages} 页
               </div>
             </TabsContent>
 

@@ -9,7 +9,7 @@ import {
   healthCheck,
   getArticles,
   createArticle,
-} from "../api/api";
+} from "../api/Api";
 
 // Health check hook
 export const useHealthCheck = () => {

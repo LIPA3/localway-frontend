@@ -6,24 +6,17 @@ import {
   toggleArticleLike,
   likeComment,
   unlikeComment,
-  healthCheck,
   getArticles,
   createArticle,
+  getArticlesByCreatorId,
+  getUserInfo,
 } from "../api/Api";
 
-// Health check hook
-export const useHealthCheck = () => {
-  return useQuery({
-    queryKey: ["health"],
-    queryFn: healthCheck,
-  });
-};
-
 // Articles hooks
-export const useArticles = (page, size, keyWord) => {
+export const useArticles = (page, size, keyWord, author) => {
   return useQuery({
-    queryKey: ["articles", page, size, keyWord],
-    queryFn: () => getArticles(page, size, keyWord),
+    queryKey: ["articles", page, size, keyWord, author],
+    queryFn: () => getArticles(page, size, keyWord, author),
   });
 };
 
@@ -36,6 +29,23 @@ export const useCreateArticle = () => {
       // Invalidate articles to refresh the list
       queryClient.invalidateQueries(["articles"]);
     },
+  });
+};
+
+export const useArticlesByCreatorId = (creatorId) => {
+  return useQuery({
+    queryKey: ["articles", "creator", creatorId],
+    queryFn: () => getArticlesByCreatorId(creatorId),
+    enabled: !!creatorId,
+  });
+};
+
+// Users hooks
+export const useUserInfo = (userId) => {
+  return useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => getUserInfo(userId),
+    enabled: !!userId,
   });
 };
 
@@ -82,7 +92,6 @@ export const useToggleArticleLike = () => {
     onSuccess: () => {
       // Invalidate any relevant queries that might show like counts
       queryClient.invalidateQueries(["articles"]);
-      queryClient.invalidateQueries(["posts"]);
     },
   });
 };

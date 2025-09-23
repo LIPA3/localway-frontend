@@ -18,11 +18,12 @@ export const healthCheck = async () => {
 };
 
 // Articles API
-export const getArticles = async (page, size, keyWord) => {
+export const getArticles = async (page, size, keyWord, author) => {
   const params = new URLSearchParams();
   if (page !== undefined) params.append("page", page);
   if (size !== undefined) params.append("size", size);
   if (keyWord) params.append("keyWord", keyWord);
+  if (author !== undefined) params.append("author", author);
 
   const response = await apiClient.get(
     `/articles/queryPage?${params.toString()}`
@@ -42,6 +43,17 @@ export const createArticle = async (articleData) => {
   return response.data;
 };
 
+export const getArticlesByCreatorId = async (creatorId) => {
+  const response = await apiClient.get(`/articles/${creatorId}`);
+  return response.data;
+};
+
+// Users API
+export const getUserInfo = async (userId) => {
+  const response = await apiClient.get(`/users/${userId}`);
+  return response.data;
+};
+
 // Comments API
 export const getCommentsByArticleId = async (articleId) => {
   const response = await apiClient.get(`/comments/${articleId}`);
@@ -50,7 +62,7 @@ export const getCommentsByArticleId = async (articleId) => {
 
 export const createComment = async (commentData) => {
   const response = await apiClient.post("/comments", {
-    commentatorId: commentData.userId,
+    commentatorId: commentData.commentatorId,
     articleId: commentData.articleId,
     content: commentData.content,
   });
@@ -59,7 +71,7 @@ export const createComment = async (commentData) => {
 
 export const createReply = async (replyData) => {
   const response = await apiClient.post("/comments/reply", {
-    replierId: replyData.userId,
+    replierId: replyData.replierId,
     commentId: replyData.commentId,
     content: replyData.content,
   });

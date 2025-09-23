@@ -22,11 +22,13 @@ export default function Home() {
             size="sm"
             className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
           >
-            创建内容
+            创建文章
           </Button>
         </Link>
       </div>
-      <RecommendedPostsPage />
+      <div className="content">
+        <RecommendedPostsPage />
+      </div>
     </div>
   );
 }

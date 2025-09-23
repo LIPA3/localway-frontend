@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   User,
   Settings,
@@ -11,7 +11,6 @@ import {
   Edit,
   Plus,
   MapPin,
-  Star,
   Calendar,
   Users,
 } from "lucide-react"
@@ -22,52 +21,84 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import { Link } from "react-router"
 import "../../css/CreatorPage.css"
+import api from "../../api/api";
 
 export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [totalLikes, setTotalLikes] = useState(0)
 
   const creatorStats = {
-    totalPosts: 24,
-    totalLikes: 1250,
+    totalPosts: articles.length || 24,
     totalFollowers: 890,
     totalExperiences: 18,
   }
 
-  const myPosts = [
-    {
-      id: 1,
-      title: "广州老城区的咖啡文化探索",
-      image: "/guangzhou-old-city-coffee-culture.jpg",
-      category: "咖啡文化",
-      location: "广州",
-      likes: 234,
-      comments: 45,
-      tags: ["地道", "本地化", "咖啡", "历史", "本地文化", "老城区"],
-      createdAt: "2天前",
-    },
-    {
-      id: 2,
-      title: "成都街头巷尾的茶馆文化",
-      image: "/chengdu-teahouse-culture-street.jpg",
-      category: "茶文化",
-      location: "成都",
-      likes: 189,
-      comments: 32,
-      tags: ["地道", "本地化", "茶文化", "成都", "街头文化"],
-      createdAt: "5天前",
-    },
-    {
-      id: 3,
-      title: "北京胡同里的传统手工艺",
-      image: "/beijing-hutong-traditional-crafts.jpg",
-      category: "传统手工",
-      location: "北京",
-      likes: 156,
-      comments: 28,
-      tags: ["地道", "本地化", "手工艺", "胡同", "传统文化"],
-      createdAt: "1周前",
-    },
-  ]
+  const getCreatorInfo = async () => {
+    try {
+      setLoading(true)
+      
+      const response = await api.get('articles/1');
+      
+      console.log('API响应:', response);
+      console.log('响应数据:', response.data);
+      
+      if (response.data) {
+        // 根据实际后端返回的数据结构调整
+        const data = response.data;
+        
+        // 如果是直接返回数组
+        if (Array.isArray(data)) {
+          setArticles(data);
+          setPagination(prev => ({
+            ...prev,
+            total: data.length
+          }));
+        } 
+        // 如果是分页对象结构
+        else if (data.records || data.content || data.data) {
+          const records = data.records || data.content || data.data || [];
+          setArticles(records);
+          setPagination({
+            page: data.current || data.number || page,
+            size: data.size || size,
+            total: data.total || data.totalElements || records.length,
+            totalPages: data.pages || data.totalPages || Math.ceil((data.total || records.length) / size)
+          });
+        }
+        // 如果直接是数据对象
+        else {
+          setArticles([data]);
+        }
+        
+        console.log('设置的文章数据:', articles);
+      }
+    } catch (error) {
+      console.error('获取创作者信息失败:', error);
+      console.error('错误详情:', error.response?.data);
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  //获得点赞数
+  const getLikesCount = async () => {
+    try {
+      const response = await api.get('users/likes/1');
+      setTotalLikes(response.data);
+      console.log('点赞数:', response.data);
+    } catch (error) {
+      console.error('获取点赞数失败:', error);
+    }
+  }
+
+  // 页面加载时获取数据
+  useEffect(() => {
+    console.log('组件挂载，开始获取数据');
+    getCreatorInfo();
+    getLikesCount();
+  }, [])
 
   return (
     <div className="creator-page min-h-screen bg-background">
@@ -146,7 +177,7 @@ export function CreatorProfilePage() {
                       <div className="text-sm text-muted-foreground">发布内容</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{creatorStats.totalLikes}</div>
+                      <div className="text-2xl font-bold text-primary">{totalLikes}</div>
                       <div className="text-sm text-muted-foreground">获得点赞</div>
                     </div>
                     <div className="text-center">
@@ -183,61 +214,65 @@ export function CreatorProfilePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myPosts.map((post) => (
-                  <Card key={post.id} className="post-card overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
-                        src={post.image || "/placeholder.svg"}
-                        alt={post.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs mypost-border">
-                          {post.category}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{post.createdAt}</span>
+                {loading ? (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-muted-foreground">加载中...</p>
+                  </div>
+                ) : articles.length > 0 ? (
+                  articles.map((post) => (
+                    <Card key={post.id} className="post-card overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={post.image || post.coverImage || "/placeholder.svg"}
+                          alt={post.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
                       </div>
+                      <CardContent className="p-4">
 
-                      <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
+                        <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
 
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-                        <MapPin className="w-3 h-3" />
-                        <span>{post.location}</span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs mypost-border tag-blue">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {post.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs mypost-border tag-blue">
-                            +{post.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Heart className="w-4 h-4" />
-                            <span>{post.likes}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{post.comments}</span>
-                          </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+                          <MapPin className="w-3 h-3" />
+                          <span>{post.address || "未知地点"}</span>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {(post.tagList || []).slice(0, 3).map((tag) => (
+                            <Badge key={tag.tagId} variant="outline" className="text-xs mypost-border tag-blue">
+                              {tag.tagName}
+                            </Badge>
+                          ))}
+                          {(post.tagList || []).length > 3 && (
+                            <Badge variant="outline" className="text-xs mypost-border tag-blue">
+                              +{(post.tagList || []).length - 3}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Heart className="w-4 h-4" />
+                              <span>{post.likesNum || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MessageCircle className="w-4 h-4" />
+                              <span>{post.commentsNum || 0}</span>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-muted-foreground">暂无文章数据</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 

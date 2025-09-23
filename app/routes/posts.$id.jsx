@@ -158,13 +158,19 @@ export default function PostDetail() {
     });
 
     if (isCurrentlyLiked) {
-      unlikeCommentMutation.mutate({ commentId, userId: currentUserId }, {
+      unlikeCommentMutation.mutate({
+        commentId,
+        commentLikeRequest: { userId: currentUserId }
+      }, {
         onError: () => {
           setLikedComments(prev => new Set(prev).add(commentId));
         }
       });
     } else {
-      likeCommentMutation.mutate({ commentId, userId: currentUserId }, {
+      likeCommentMutation.mutate({
+        commentId,
+        commentLikeRequest: { userId: currentUserId }
+      }, {
         onError: () => {
           setLikedComments(prev => {
             const newSet = new Set(prev);

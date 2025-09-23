@@ -249,6 +249,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                 <Link
                   key={article.articleId}
                   to={`/posts/${article.articleId}`}
+                  state={{ article }}
                   className="block"
                 >
                   <Card

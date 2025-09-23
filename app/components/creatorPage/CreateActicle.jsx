@@ -11,8 +11,8 @@ import { Label } from "../ui/Label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import "../../css/CreateArticle.css"
-import api from "../../api/api.js"
-
+import { apiClient } from "../../api/Api"
+const api = apiClient
 
 export function CreatorContentPage() {
   const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]

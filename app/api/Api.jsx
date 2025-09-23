@@ -3,13 +3,30 @@ import axios from "axios";
 // API base configuration
 const API_BASE_URL = "http://localhost:8080";
 
-export const apiClient = axios.create({
+export let apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000,
 });
+
+apiClient.interceptors.response.use(
+   (response) => {
+     // handle response
+     return response;
+   },
+   (error) => {
+     // handle response error
+	const {status, data} = error.response;
+    console.log(status, data);
+
+      if (status === 404) {
+        alert("请求的资源不存在");
+      }
+     return Promise.reject(error);
+   }
+);
 
 // Health check
 export const healthCheck = async () => {

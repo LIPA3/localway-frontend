@@ -69,7 +69,7 @@ export function CreatorContentPage() {
       formData.append('file', file)
       formData.append('type', 'experience') // 体验图片类型
       
-      const response = await axios.post('/api/upload/image', formData, {
+      const response = await axios.post('http://localhost:8080/oss/uploadImg', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -157,18 +157,22 @@ export function CreatorContentPage() {
     
     try {
       const experienceData = {
+        creatorId: 1, // TODO: 替换为实际用户ID
         title: title.trim(),
         content: content.trim(),
         location: selectedLocation,
-        category: selectedCategory,
-        tags: tags,
-        images: uploadedImages.map(img => img.url),
-        duration: duration,
-        status: 'published', // 发布状态
+        // category: selectedCategory,
+        tags: [
+          { tagName: "a" },
+          { tagName: "c" }
+        ],
+        images: "string",
+        // duration: duration,
+        // status: 'published', // 发布状态
         createdAt: new Date().toISOString()
       }
 
-      const response = await axios.post('/api/experiences', experienceData, {
+      const response = await axios.post('http://localhost:8080/articles', experienceData, {
         headers: {
           'Content-Type': 'application/json',
           // 如果需要认证，添加 Authorization header

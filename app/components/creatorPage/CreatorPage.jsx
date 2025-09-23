@@ -11,7 +11,6 @@ import {
   Edit,
   Plus,
   MapPin,
-  Star,
   Calendar,
   Users,
 } from "lucide-react"
@@ -22,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import { Link } from "react-router"
 import "../../css/CreatorPage.css"
+import api from "../../api/api";
 
 export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
@@ -31,6 +31,18 @@ export function CreatorProfilePage() {
     totalLikes: 1250,
     totalFollowers: 890,
     totalExperiences: 18,
+  }
+ const getCreatorInfo = async () => {
+    try {
+      const response = await api.get('articles/queryPage');
+      if (!response.ok) {
+        throw new Error('网络错误');
+      }
+      const data = await response.json();
+      console.log('创作者信息:', data);
+    } catch (error) {
+      console.error('获取创作者信息失败:', error);
+    }
   }
 
   const myPosts = [

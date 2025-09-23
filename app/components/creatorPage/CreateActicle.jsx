@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import axios from "axios"
 import { PenTool, ImageIcon, MapPin, Tag, Save, Send, Plus, X, Upload, Clock, Users, Star } from "lucide-react"
 import { Button } from "../ui/Button"
 import { Input } from "../ui/Input"
@@ -12,18 +11,18 @@ import { Label } from "../ui/Label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import "../../css/CreateArticle.css"
+import api from "../../api/api.js"
 
-const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
 
 export function CreatorContentPage() {
+  const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
+
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
   const [tags, setTags] = useState([])
   const [newTag, setNewTag] = useState("")
-  const [duration, setDuration] = useState("")
-  // const [maxParticipants, setMaxParticipants] = useState("")
   const [activeTab, setActiveTab] = useState("edit")
   
   // 图片上传相关状态
@@ -69,10 +68,7 @@ export function CreatorContentPage() {
       formData.append('file', file)
       formData.append('type', 'experience') // 体验图片类型
       
-      const response = await axios.post('http://localhost:8080/oss/uploadImg', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await api.post('oss/uploadImg', formData, {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
@@ -160,33 +156,22 @@ export function CreatorContentPage() {
         creatorId: 1, // TODO: 替换为实际用户ID
         title: title.trim(),
         content: content.trim(),
-        location: selectedLocation,
-        // category: selectedCategory,
-        tags: [
-          { tagName: "a" },
-          { tagName: "c" }
-        ],
-        images: "string",
-        // duration: duration,
+        address: selectedLocation,
+        tags: tags.map(tag => ({ tagName: tag })), // 使用用户输入的标签
+        images: uploadedImages.map(img => img.url).join(","),
         // status: 'published', // 发布状态
-        createdAt: new Date().toISOString()
+        // createdAt: new Date().toISOString()
       }
 
-      const response = await axios.post('http://localhost:8080/articles', experienceData, {
-        headers: {
-          'Content-Type': 'application/json',
-          // 如果需要认证，添加 Authorization header
-          // 'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await api.post('articles', experienceData)
 
-      if (response.data.success) {
+      if (response.status === 200) {
         setPublishSuccess(true)
         alert('体验发布成功！')
         
         // 重置表单或跳转到体验详情页
         // 可以根据需要导航到发布成功页面
-        console.log('发布成功，体验ID:', response.data.experienceId)
+        console.log('发布成功')
         
         // 清空表单
         setTitle('')
@@ -195,9 +180,9 @@ export function CreatorContentPage() {
         setSelectedLocation('')
         setTags([])
         setUploadedImages([])
-        setDuration('')
         
       } else {
+        console.log(response)
         throw new Error(response.data.message || '发布失败')
       }
       
@@ -496,21 +481,6 @@ export function CreatorContentPage() {
                           {selectedLocation}
                         </div>
                       )}
-{/* 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        {duration && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {duration}
-                          </div>
-                        )}
-                        {maxParticipants && (
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            最多{maxParticipants}
-                          </div>
-                        )}
-                      </div> */}
                     </div>
 
                     {/* Description Preview */}

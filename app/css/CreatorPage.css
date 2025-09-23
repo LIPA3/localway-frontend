@@ -1,0 +1,35 @@
+.creator-page header { 
+  box-shadow: 0 1px 0 0 rgba(0,0,0,0.06);
+  background: linear-gradient(180deg, #fffdf9 0%, #fff7ed 100%) !important;
+  backdrop-filter: blur(6px);
+}
+.creator-page .container { max-width: 1200px; }
+
+.creator-page .tabs-list { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); }
+.creator-page .post-card { 
+  transition: box-shadow .25s ease; 
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%) !important;
+  border-color: #e5e7eb !important; /* unify as mypost border */
+}
+.creator-page .post-card img { transition: transform .3s ease; }
+.creator-page .post-card img:hover { transform: scale(1.05); }
+
+/* Color tune to match mock (orange primary) */
+.creator-page .bg-primary { background-color: #f97316 !important; }
+.creator-page .bg-primary:hover { background-color: #ea580c !important; }
+.creator-page .text-muted-foreground { color: #6b7280 !important; }
+.creator-page .bg-orange-100 { background-color: #ffedd5 !important; }
+.creator-page .text-orange-800 { color: #9a3412 !important; }
+
+.creator-page .post-card:hover { box-shadow: 0 10px 24px rgba(0,0,0,.08) !important; }
+
+/* unified border for badges/tags like my post */
+.creator-page .mypost-border { border: 1px solid #e5e7eb !important; }
+
+/* light blue tag background */
+.creator-page .tag-blue { 
+  background-color: #e6f2ff !important; /* very light blue */
+  color: #0b5cab !important; /* blue text */
+  border-color: #bfdbfe !important; /* light blue border */
+}
+

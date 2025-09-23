@@ -1,25 +1,59 @@
-const HomePage = () => {
+import { RecommendedPostsPage } from "../components/homePage/RecommendedPostsPage";
+import { Link } from "react-router";
+import { Button } from "../components/ui/Button";
+import "../css/HomePage.css";
+
+export default function Home() {
   return (
-    <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>Welcome to LocalWay!</h1>
-      <p>Discover local experiences, events, and places near you.</p>
-      <button
-        style={{
-          padding: "0.75rem 1.5rem",
-          fontSize: "1rem",
-          background: "#0070f3",
-          color: "#fff",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          marginTop: "1rem",
-        }}
-        onClick={() => alert("Explore coming soon!")}
-      >
-        Explore Now
-      </button>
+    <div className="home-page">
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Link href="/search">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
+          >
+            搜索达人
+          </Button>
+        </Link>
+        <Link href="/creator-profile">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
+          >
+            创作者中心
+          </Button>
+        </Link>
+        <Link href="/creator-edit">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
+          >
+            编辑内容
+          </Button>
+        </Link>
+        <Link href="/create">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
+          >
+            创建内容
+          </Button>
+        </Link>
+        <Link href="/posts">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background/80 backdrop-blur-sm border-border hover:bg-accent"
+          >
+            浏览推荐
+          </Button>
+        </Link>
+      </div>
+      <RecommendedPostsPage />
     </div>
   );
-};
-
-export default HomePage;
+}

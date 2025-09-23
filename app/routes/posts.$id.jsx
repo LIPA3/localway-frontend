@@ -1,0 +1,814 @@
+import { useParams, Link } from "react-router";
+import { useState, useEffect } from "react";
+import {
+  Heart,
+  MessageCircle,
+  MapPin,
+  Star,
+  ArrowLeft,
+  Send,
+  ThumbsUp,
+  Reply,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { Button } from "../components/ui/Button";
+import { Card, CardContent } from "../components/ui/Card";
+import { Badge } from "../components/ui/Badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
+import { Textarea } from "../components/ui/Textarea";
+import "../css/PostDetail.css";
+
+// DEMO DATA
+const postsData = [
+  {
+    article_id: 1,
+    creator_id: 101,
+    title: "广州老城区的咖啡文化探索",
+    address: "广州市荔湾区恩宁路",
+    content:
+      "带你走进广州老城区的咖啡文化世界，探索那些隐藏在小巷中的独特咖啡店，了解每一杯咖啡背后的历史故事。从传统的茶文化到现代咖啡文化的融合，感受这座城市的文化变迁。在这次体验中，我们将参观3-4家具有代表性的咖啡店，每一家都有其独特的故事和特色。你将学习到咖啡的制作工艺，了解不同咖啡豆的特点，以及如何品鉴一杯好咖啡。同时，我们还会深入了解广州的历史文化，感受这座千年古城的魅力。",
+    image: "/guangzhou-coffee-culture.jpg",
+    video: null,
+    likes_num: 234,
+    comments_num: 45,
+    create_time: "2024-12-20T10:00:00Z",
+    update_time: "2024-12-20T10:00:00Z",
+    is_deleted: 0,
+    author: {
+      name: "Ale Chen",
+      avatar:
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uilN86FuKAmS6s2N3SbfVfcxjEYkui.png",
+      location: "广州",
+      isVerified: true,
+      rating: 4.9,
+      bio: "资深咖啡文化爱好者，在广州生活15年，对本地咖啡文化有深入研究。",
+    },
+    category: "咖啡文化",
+    tags: ["咖啡", "历史", "本地文化", "老城区", "地道", "本地化"],
+    duration: "3小时",
+    maxGuests: 6,
+    images: [
+      "/guangzhou-coffee-culture.jpg",
+      "/guangzhou-coffee-shop-1.jpg",
+      "/guangzhou-coffee-shop-2.jpg",
+      "/guangzhou-coffee-making.jpg",
+    ],
+  },
+  {
+    article_id: 2,
+    creator_id: 102,
+    title: "上海弄堂里的传统手工艺",
+    address: "上海市黄浦区田子坊",
+    content:
+      "在上海的老弄堂中，依然保留着许多传统手工艺。跟随我一起探访这些匠人，学习传统技艺，感受老上海的文化底蕴。通过亲手制作，你将深刻体会到传统手工艺的魅力，感受匠人精神的可贵。这不仅是一次技艺的学习，更是一次心灵的洗礼。",
+    image: "/shanghai-traditional-crafts.jpg",
+    video: null,
+    likes_num: 189,
+    comments_num: 32,
+    create_time: "2024-12-20T07:00:00Z",
+    update_time: "2024-12-20T07:00:00Z",
+    is_deleted: 0,
+    author: {
+      name: "Lin Xiaoyang",
+      avatar:
+        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HMT2n5SvrbOoz4UrfQfDP9FTLRxWK2.png",
+      location: "上海",
+      isVerified: true,
+      rating: 4.7,
+      bio: "传统手工艺传承人，专注于保护和传播上海本地文化。",
+    },
+    category: "传统手工",
+    tags: ["手工艺", "传统文化", "弄堂", "匠人", "地道", "本地化"],
+    duration: "2.5小时",
+    maxGuests: 8,
+    images: [
+      "/shanghai-traditional-crafts.jpg",
+      "/shanghai-crafts-workshop.jpg",
+      "/shanghai-artisan.jpg",
+    ],
+  },
+  {
+    article_id: 3,
+    creator_id: 103,
+    title: "北京胡同里的美食寻味之旅",
+    address: "北京市东城区南锣鼓巷",
+    content:
+      "走进北京的胡同深处，寻找那些只有老北京人才知道的美食秘密。从传统小吃到创新料理，每一口都是历史的味道。我们的美食之旅将从早餐开始，品尝正宗的豆浆油条、煎饼果子，然后走访几家有着数十年历史的老字号餐厅。除了品尝美食，我们还会了解每道菜背后的历史故事。",
+    image: "/beijing-hutong-food.jpg",
+    video: null,
+    likes_num: 312,
+    comments_num: 78,
+    create_time: "2024-12-19T14:00:00Z",
+    update_time: "2024-12-19T14:00:00Z",
+    is_deleted: 0,
+    author: {
+      name: "王明",
+      avatar: "/beijing-local-expert.jpg",
+      location: "北京",
+      isVerified: false,
+      rating: 4.5,
+      bio: "土生土长的老北京人，对胡同美食有着深厚的了解和热爱。",
+    },
+    category: "美食文化",
+    tags: ["美食", "胡同", "传统小吃", "北京", "地道", "本地化"],
+    duration: "4小时",
+    maxGuests: 4,
+    images: [
+      "/beijing-hutong-food.jpg",
+      "/beijing-street-food.jpg",
+      "/beijing-traditional-restaurant.jpg",
+    ],
+  },
+  {
+    article_id: 4,
+    creator_id: 104,
+    title: "成都茶馆文化深度体验",
+    address: "成都市青羊区宽窄巷子",
+    content:
+      "在成都的传统茶馆中，感受慢生活的节奏。学习茶艺，听老茶客讲述成都的变迁，体验最地道的成都文化。在这次体验中，我们将深入几家老茶馆，学习传统的茶艺表演，了解不同茶叶的特点和冲泡方法。茶馆不仅是品茶的地方，更是成都人社交和休闲的重要场所。",
+    image: "/chengdu-teahouse-culture.jpg",
+    video: null,
+    likes_num: 156,
+    comments_num: 28,
+    create_time: "2024-12-18T16:00:00Z",
+    update_time: "2024-12-18T16:00:00Z",
+    is_deleted: 0,
+    author: {
+      name: "李小花",
+      avatar: "/chengdu-food-expert.jpg",
+      location: "成都",
+      isVerified: true,
+      rating: 4.8,
+      bio: "成都茶文化研究者，致力于传播巴蜀茶文化的精髓。",
+    },
+    category: "茶文化",
+    tags: ["茶文化", "慢生活", "传统", "成都", "地道", "本地化"],
+    duration: "2小时",
+    maxGuests: 6,
+    images: [
+      "/chengdu-teahouse-culture.jpg",
+      "/chengdu-tea-ceremony.jpg",
+      "/chengdu-traditional-teahouse.jpg",
+    ],
+  },
+  {
+    article_id: 5,
+    creator_id: 105,
+    title: "西安古城墙下的历史漫步",
+    address: "西安市碑林区南门",
+    content:
+      "沿着西安古城墙，聆听千年古都的历史回响。从唐朝的繁华到现代的变迁，每一块砖石都诉说着不同的故事。在这次旅程中，我们会了解城墙的建造历史、防御功能，以及不同历史时期的修缮过程。从城墙上俯瞰现代西安，古今对比令人感慨。这不仅是一次历史的学习，更是一次时空的穿越体验。",
+    image: "/xian-ancient-wall.jpg",
+    video: null,
+    likes_num: 278,
+    comments_num: 56,
+    create_time: "2024-12-17T11:00:00Z",
+    update_time: "2024-12-17T11:00:00Z",
+    is_deleted: 0,
+    author: {
+      name: "张历史",
+      avatar: "/xian-history-expert.jpg",
+      location: "西安",
+      isVerified: true,
+      rating: 4.9,
+      bio: "西安历史文化专家，专业导游15年，对古都历史有着深入的研究。",
+    },
+    category: "历史文化",
+    tags: ["历史", "古城墙", "唐朝", "西安", "地道", "本地化"],
+    duration: "3.5小时",
+    maxGuests: 10,
+    images: [
+      "/xian-ancient-wall.jpg",
+      "/xian-city-view.jpg",
+      "/xian-historical-sites.jpg",
+    ],
+  },
+];
+
+// Mock comments data
+const mockComments = [
+  {
+    id: 1,
+    author: {
+      name: "张小明",
+      avatar: "/user-avatar-1.jpg",
+      location: "广州",
+    },
+    content:
+      "太棒了！上周参加了这个体验，Ale老师讲解得非常详细，那几家咖啡店真的很有特色，特别是那家藏在巷子里的老店，咖啡香味至今还记得。强烈推荐给喜欢咖啡文化的朋友！",
+    publishedAt: "1小时前",
+    likes: 12,
+    isLiked: false,
+    replies: [
+      {
+        id: 11,
+        author: {
+          name: "Ale Chen",
+          avatar:
+            "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uilN86FuKAmS6s2N3SbfVfcxjEYkui.png",
+          isAuthor: true,
+        },
+        content:
+          "谢谢你的支持！很高兴你喜欢这次体验，那家老店确实是我的最爱之一。",
+        publishedAt: "30分钟前",
+      },
+    ],
+  },
+  {
+    id: 2,
+    author: {
+      name: "李文静",
+      avatar: "/user-avatar-2.jpg",
+      location: "深圳",
+    },
+    content:
+      "作为一个咖啡爱好者，这个体验让我对广州的咖啡文化有了全新的认识。不仅学到了很多咖啡知识，还了解了广州的历史文化。Ale老师人很好，讲解生动有趣。下次来广州还想参加！",
+    publishedAt: "3小时前",
+    likes: 8,
+    isLiked: true,
+    replies: [],
+  },
+  {
+    id: 3,
+    author: {
+      name: "王大力",
+      avatar: "/user-avatar-3.jpg",
+      location: "广州",
+    },
+    content:
+      "本地人表示学到了很多！原来我们身边有这么多有故事的咖啡店，以前都没注意到。这种深度体验真的很有意义，让我重新认识了自己的城市。",
+    publishedAt: "5小时前",
+    likes: 15,
+    isLiked: false,
+    replies: [
+      {
+        id: 31,
+        author: {
+          name: "陈小花",
+          avatar: "/user-avatar-4.jpg",
+        },
+        content: "同感！有时候外地人比我们本地人更了解我们的城市文化呢。",
+        publishedAt: "4小时前",
+      },
+    ],
+  },
+];
+
+/**
+ * PostDetail component displays the details of a single post, including its content, author information, tags, and interactive actions such as liking and commenting.
+ *
+ * Features:
+ * - Fetches and displays post data based on the route parameter `id`.
+ * - Shows post image, title, content, author details, and tags.
+ * - Allows users to like the post and view the number of likes and comments.
+ * - Renders a comments section with loading and error states.
+ * - Enables users to add new comments and replies to existing comments.
+ * - Supports liking individual comments.
+ * - Handles UI interactions such as expanding/collapsing the comments section.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered post detail page with interactive comments.
+ */
+export default function PostDetail() {
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [replyTo, setReplyTo] = useState(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentsError, setCommentsError] = useState(false);
+  const [expandedComments, setExpandedComments] = useState(true);
+
+  const postData = postsData.find((p) => p.article_id === parseInt(id));
+
+  const fetchComments = async () => {
+    setCommentsLoading(true);
+    setCommentsError(false);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (!postData) {
+        throw new Error("Failed to fetch comments");
+      }
+
+      setComments(mockComments);
+    } catch (error) {
+      setCommentsError(true);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, [id]);
+
+  useState(() => {
+    if (postData) {
+      setPost({
+        ...postData,
+        stats: {
+          likes: postData.likes_num,
+          comments: postData.comments_num,
+          bookmarks: 67,
+          views: 1240,
+        },
+        publishedAt: "2小时前",
+        isLiked: false,
+        isBookmarked: false,
+      });
+    }
+  }, [postData]);
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">
+            文章未找到
+          </h1>
+          <Link to="/">
+            <Button variant="outline">返回首页</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleLike = () => {
+    setPost({
+      ...post,
+      isLiked: !post.isLiked,
+      stats: {
+        ...post.stats,
+        likes: post.isLiked ? post.stats.likes - 1 : post.stats.likes + 1,
+      },
+    });
+  };
+
+  const handleCommentLike = (commentId) => {
+    setComments(
+      comments.map((comment) =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              isLiked: !comment.isLiked,
+              likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
+            }
+          : comment
+      )
+    );
+  };
+
+  const handleSubmitComment = () => {
+    if (newComment.trim()) {
+      const comment = {
+        id: Date.now(),
+        author: {
+          name: "当前用户",
+          avatar: "/current-user-avatar.jpg",
+          location: "广州",
+        },
+        content: newComment,
+        publishedAt: "刚刚",
+        likes: 0,
+        isLiked: false,
+        replies: [],
+      };
+      setComments([comment, ...comments]);
+      setNewComment("");
+      setPost({
+        ...post,
+        stats: {
+          ...post.stats,
+          comments: post.stats.comments + 1,
+        },
+      });
+    }
+  };
+
+  const handleSubmitReply = (commentId) => {
+    if (replyContent.trim()) {
+      const reply = {
+        id: Date.now(),
+        author: {
+          name: "当前用户",
+          avatar: "/current-user-avatar.jpg",
+        },
+        content: replyContent,
+        publishedAt: "刚刚",
+        likes: 0,
+        isLiked: false,
+      };
+
+      setComments(
+        comments.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                replies: [...comment.replies, reply],
+              }
+            : comment
+        )
+      );
+      setReplyContent("");
+      setReplyTo(null);
+    }
+  };
+
+  return (
+    <div className="post-detail min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                返回列表
+              </Button>
+            </Link>
+            <h1 className="text-lg font-semibold text-foreground">体验详情</h1>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Post Content */}
+        <Card className="post-card border border-border bg-card mb-6">
+          <CardContent className="p-0">
+            {/* Hero Image */}
+            <div className="relative h-80 overflow-hidden">
+              <img
+                src={
+                  post.image ||
+                  `/placeholder.svg?height=400&width=800&query=${encodeURIComponent(post.title)}`
+                }
+                alt={post.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-4 left-4">
+                <Badge className="bg-primary/90 text-primary-foreground backdrop-blur-sm">
+                  {post.category}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* Author Info */}
+              <div className="flex items-center gap-4 mb-6">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage
+                    src={post.author.avatar || "/placeholder.svg"}
+                    alt={post.author.name}
+                  />
+                  <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-semibold text-card-foreground">
+                      {post.author.name}
+                    </h4>
+                    {post.author.isVerified && (
+                      <Badge variant="secondary" className="text-xs">
+                        认证达人
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {post.author.location}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      {post.author.rating}
+                    </div>
+                    <span>{post.publishedAt}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {post.author.bio}
+                  </p>
+                </div>
+              </div>
+
+              {/* Post Title and Content */}
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-card-foreground mb-4 text-balance">
+                  {post.title}
+                </h1>
+                <p className="text-muted-foreground leading-relaxed text-pretty">
+                  {post.content}
+                </p>
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {post.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="text-xs border-border mypost-border tag-blue hover:bg-accent cursor-pointer"
+                  >
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLike}
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
+                    />
+                    {post.stats.likes}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setExpandedComments(true)}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {post.stats.comments}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Comments Section */}
+        <Card className="post-card border border-border bg-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-card-foreground">
+                评论 ({post.stats.comments})
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setExpandedComments(!expandedComments)}
+                className="flex items-center gap-2"
+              >
+                {expandedComments ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    收起
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    展开评论
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {expandedComments && (
+              <>
+                {/* Add Comment */}
+                <div className="mb-6">
+                  <div className="flex gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage
+                        src="/current-user-avatar.jpg"
+                        alt="当前用户"
+                      />
+                      <AvatarFallback>我</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <Textarea
+                        placeholder="分享你的想法..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-[80px] resize-none border-border"
+                      />
+                      <div className="flex justify-end mt-2">
+                        <Button
+                          size="sm"
+                          onClick={handleSubmitComment}
+                          disabled={!newComment.trim()}
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          发表评论
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Comments Loading State */}
+                {commentsLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      正在加载评论...
+                    </div>
+                  </div>
+                )}
+
+                {/* Comments Error State */}
+                {commentsError && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-muted-foreground mb-4">评论加载失败</p>
+                    <Button
+                      variant="outline"
+                      onClick={fetchComments}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      重新加载
+                    </Button>
+                  </div>
+                )}
+
+                {/* Empty Comments State */}
+                {!commentsLoading &&
+                  !commentsError &&
+                  comments.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <MessageCircle className="w-12 h-12 text-muted-foreground/50 mb-3" />
+                      <p className="text-muted-foreground mb-2">暂无评论</p>
+                      <p className="text-sm text-muted-foreground">
+                        成为第一个评论的人吧！
+                      </p>
+                    </div>
+                  )}
+
+                {/* Comments List */}
+                {!commentsLoading && !commentsError && comments.length > 0 && (
+                  <div className="space-y-6">
+                    {comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="border-b border-border last:border-b-0 pb-6 last:pb-0"
+                      >
+                        <div className="flex gap-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage
+                              src={comment.author.avatar || "/placeholder.svg"}
+                              alt={comment.author.name}
+                            />
+                            <AvatarFallback>
+                              {comment.author.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-card-foreground">
+                                {comment.author.name}
+                              </span>
+                              {comment.author.location && (
+                                <span className="text-xs text-muted-foreground">
+                                  · {comment.author.location}
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                · {comment.publishedAt}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground mb-3 leading-relaxed">
+                              {comment.content}
+                            </p>
+                            <div className="flex items-center gap-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleCommentLike(comment.id)}
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+                              >
+                                <ThumbsUp
+                                  className={`w-3 h-3 ${comment.isLiked ? "fill-current text-primary" : ""}`}
+                                />
+                                {comment.likes > 0 && comment.likes}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setReplyTo(
+                                    replyTo === comment.id ? null : comment.id
+                                  )
+                                }
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+                              >
+                                <Reply className="w-3 h-3" />
+                                回复
+                              </Button>
+                            </div>
+
+                            {/* Reply Form */}
+                            {replyTo === comment.id && (
+                              <div className="mt-3 flex gap-2">
+                                <Avatar className="w-6 h-6">
+                                  <AvatarImage
+                                    src="/current-user-avatar.jpg"
+                                    alt="当前用户"
+                                  />
+                                  <AvatarFallback>我</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <Textarea
+                                    placeholder={`回复 ${comment.author.name}...`}
+                                    value={replyContent}
+                                    onChange={(e) =>
+                                      setReplyContent(e.target.value)
+                                    }
+                                    className="min-h-[60px] resize-none border-border text-sm"
+                                  />
+                                  <div className="flex justify-end gap-2 mt-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setReplyTo(null);
+                                        setReplyContent("");
+                                      }}
+                                    >
+                                      取消
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleSubmitReply(comment.id)
+                                      }
+                                      disabled={!replyContent.trim()}
+                                    >
+                                      回复
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Replies */}
+                            {comment.replies.length > 0 && (
+                              <div className="mt-4 space-y-3">
+                                {comment.replies.map((reply) => (
+                                  <div
+                                    key={reply.id}
+                                    className="flex gap-2 ml-4 border-l-2 border-border pl-3"
+                                  >
+                                    <Avatar className="w-6 h-6">
+                                      <AvatarImage
+                                        src={
+                                          reply.author.avatar ||
+                                          "/placeholder.svg"
+                                        }
+                                        alt={reply.author.name}
+                                      />
+                                      <AvatarFallback>
+                                        {reply.author.name[0]}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-medium text-card-foreground text-sm">
+                                          {reply.author.name}
+                                        </span>
+                                        {reply.author.isAuthor && (
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs"
+                                          >
+                                            作者
+                                          </Badge>
+                                        )}
+                                        <span className="text-xs text-muted-foreground">
+                                          · {reply.publishedAt}
+                                        </span>
+                                      </div>
+                                      <p className="text-muted-foreground text-sm leading-relaxed">
+                                        {reply.content}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}

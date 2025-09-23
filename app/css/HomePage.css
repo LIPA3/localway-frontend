@@ -1,0 +1,13 @@
+.home-page header {
+  background: linear-gradient(180deg, #fffdf9 0%, #fff7ed 100%) !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+
+.home-page .post-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%) !important;
+  border-color: #e5e7eb !important;
+}
+
+.home-page .mypost-border { border: 1px solid #e5e7eb !important; }
+.home-page .tag-blue { background-color: #e6f2ff !important; color: #0b5cab !important; border-color: #bfdbfe !important; }
+

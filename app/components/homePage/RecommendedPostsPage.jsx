@@ -1,164 +1,180 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { Heart, MessageCircle, MapPin, Search, TrendingUp } from "lucide-react";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
-import { Card, CardContent } from "../ui/Card";
-import { Badge } from "../ui/Badge";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar";
+import {useEffect, useState} from "react";
+import {Link} from "react-router";
+import {ChevronLeft, ChevronRight, Heart, MapPin, MessageCircle, RefreshCw, Search, TrendingUp,} from "lucide-react";
+import {Button} from "../ui/Button";
+import {Input} from "../ui/Input";
+import {Card, CardContent} from "../ui/Card";
+import {Badge} from "../ui/Badge";
+import {Avatar, AvatarFallback, AvatarImage} from "../ui/Avatar";
+import {useArticles, useToggleArticleLike, useUserInfo, useUserLikedArticles} from "../../hooks/useApi";
 
-// DEMO DATA
-const recommendedPosts = [
-  {
-    article_id: 1,
-    creator_id: 101,
-    title: "广州老城区的咖啡文化探索",
-    address: "广州市荔湾区恩宁路",
-    content:
-      "带你走进广州老城区的咖啡文化世界，探索那些隐藏在小巷中的独特咖啡店，了解每一杯咖啡背后的历史故事...",
-    image: "/guangzhou-coffee-culture.jpg",
-    video: null,
-    likes_num: 234,
-    comments_num: 45,
-    create_time: "2024-12-20T10:00:00Z",
-    update_time: "2024-12-20T10:00:00Z",
-    is_deleted: 0,
-    author: {
-      name: "Ale Chen",
-      avatar:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-uilN86FuKAmS6s2N3SbfVfcxjEYkui.png",
-      location: "广州",
-      isVerified: true,
-    },
-    category: "咖啡文化",
-    tags: ["咖啡", "历史", "本地文化", "老城区", "地道", "本地化"],
-    isLiked: false,
-  },
-  {
-    article_id: 2,
-    creator_id: 102,
-    title: "上海弄堂里的传统手工艺",
-    address: "上海市黄浦区田子坊",
-    content:
-      "在上海的老弄堂中，依然保留着许多传统手工艺。跟随我一起探访这些匠人，学习传统技艺，感受老上海的文化底蕴...",
-    image: "/shanghai-traditional-crafts.jpg",
-    video: null,
-    likes_num: 189,
-    comments_num: 32,
-    create_time: "2024-12-20T07:00:00Z",
-    update_time: "2024-12-20T07:00:00Z",
-    is_deleted: 0,
-    author: {
-      name: "Lin Xiaoyang",
-      avatar:
-        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-HMT2n5SvrbOoz4UrfQfDP9FTLRxWK2.png",
-      location: "上海",
-      isVerified: true,
-    },
-    category: "传统手工",
-    tags: ["手工艺", "传统文化", "弄堂", "匠人", "地道", "本地化"],
-    isLiked: true,
-  },
-  {
-    article_id: 3,
-    creator_id: 103,
-    title: "北京胡同里的美食寻味之旅",
-    address: "北京市东城区南锣鼓巷",
-    content:
-      "走进北京的胡同深处，寻找那些只有老北京人才知道的美食秘密。从传统小吃到创新料理，每一口都是历史的味道...",
-    image: "/beijing-hutong-food.jpg",
-    video: null,
-    likes_num: 312,
-    comments_num: 78,
-    create_time: "2024-12-19T14:00:00Z",
-    update_time: "2024-12-19T14:00:00Z",
-    is_deleted: 0,
-    author: {
-      name: "王明",
-      avatar: "/beijing-local-expert.jpg",
-      location: "北京",
-      isVerified: false,
-    },
-    category: "美食文化",
-    tags: ["美食", "胡同", "传统小吃", "北京", "地道", "本地化"],
-    isLiked: false,
-  },
-  {
-    article_id: 4,
-    creator_id: 104,
-    title: "成都茶馆文化深度体验",
-    address: "成都市青羊区宽窄巷子",
-    content:
-      "在成都的传统茶馆中，感受慢生活的节奏。学习茶艺，听老茶客讲述成都的变迁，体验最地道的成都文化...",
-    image: "/chengdu-teahouse-culture.jpg",
-    video: null,
-    likes_num: 156,
-    comments_num: 28,
-    create_time: "2024-12-18T16:00:00Z",
-    update_time: "2024-12-18T16:00:00Z",
-    is_deleted: 0,
-    author: {
-      name: "李小花",
-      avatar: "/chengdu-food-expert.jpg",
-      location: "成都",
-      isVerified: true,
-    },
-    category: "茶文化",
-    tags: ["茶文化", "慢生活", "传统", "成都", "地道", "本地化"],
-    isLiked: false,
-  },
-  {
-    article_id: 5,
-    creator_id: 105,
-    title: "西安古城墙下的历史漫步",
-    address: "西安市碑林区南门",
-    content:
-      "沿着西安古城墙，聆听千年古都的历史回响。从唐朝的繁华到现代的变迁，每一块砖石都诉说着不同的故事...",
-    image: "/xian-ancient-wall.jpg",
-    video: null,
-    likes_num: 278,
-    comments_num: 56,
-    create_time: "2024-12-17T11:00:00Z",
-    update_time: "2024-12-17T11:00:00Z",
-    is_deleted: 0,
-    author: {
-      name: "张历史",
-      avatar: "/xian-history-expert.jpg",
-      location: "西安",
-      isVerified: true,
-    },
-    category: "历史文化",
-    tags: ["历史", "古城墙", "唐朝", "西安", "地道", "本地化"],
-    isLiked: true,
-  },
-];
+// Component to display user info with real data
+function UserAvatar({userId, className = ""}) {
+  const {data: userInfo, isLoading} = useUserInfo(userId);
 
-export function RecommendedPostsPage() {
+  if (isLoading || !userInfo) {
+    return (
+      <div className={`flex items-center gap-3 ${className}`}>
+        <Avatar className="w-10 h-10">
+          <AvatarFallback>
+            {userId ? `U${userId}` : "U"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-card-foreground">
+              {isLoading ? "加载中..." : `创作者 #${userId || "Unknown"}`}
+            </h4>
+            <Badge variant="secondary" className="text-xs">
+              认证
+            </Badge>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      <Avatar className="w-10 h-10">
+        <AvatarImage src="/placeholder.svg" alt={userInfo.userName}/>
+        <AvatarFallback>
+          {userInfo.userName ? userInfo.userName.charAt(0).toUpperCase() : `U${userId}`}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-card-foreground">
+            {userInfo.userName || `创作者 #${userId}`}
+          </h4>
+          <Badge variant="secondary" className="text-xs">
+            {userInfo.role === 'ADMIN' ? '管理员' :
+              userInfo.role === 'CREATOR' ? '创作者' : '认证'}
+          </Badge>
+        </div>
+        {userInfo.motto && (
+          <p className="text-sm text-muted-foreground">
+            {userInfo.motto}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
   const [searchQuery, setSearchQuery] = useState("");
-  const sortedPosts = [...recommendedPosts].sort((a, b) => {
-    if (a.author.isVerified !== b.author.isVerified) {
-      return b.author.isVerified - a.author.isVerified;
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(pageSizeOptions[1] || 6);
+  const [likedArticles, setLikedArticles] = useState(new Set());
+
+  // TODO: Replace with actual userId from auth context/session
+  const userId = 1;
+  const { data: userLikedList, isLoading: isUserLikeLoading } = useUserLikedArticles(userId);
+
+  console.log("User liked articles:", userLikedList);
+
+  useEffect(() => {
+    if (userLikedList && userLikedList.articleIds && Array.isArray(userLikedList.articleIds)) {
+      setLikedArticles(new Set(userLikedList.articleIds));
     }
-    return b.likes_num - a.likes_num;
-  });
+  }, [userLikedList]);
 
-  const [posts, setPosts] = useState(sortedPosts);
+  const {
+    data: articles = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useArticles(page, size, debouncedSearchQuery || undefined);
 
-  const handleLike = (postId, event) => {
+  const toggleArticleLikeMutation = useToggleArticleLike();
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handleLike = (articleId, event) => {
     event.preventDefault();
     event.stopPropagation();
-    setPosts(
-      posts.map((post) =>
-        post.article_id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes_num: post.isLiked ? post.likes_num - 1 : post.likes_num + 1,
-            }
-          : post
-      )
-    );
+    const isCurrentlyLiked = likedArticles.has(articleId);
+
+    setLikedArticles(prev => {
+    const newSet = new Set(prev);
+    if (isCurrentlyLiked) {
+      newSet.delete(articleId);
+    } else {
+      newSet.add(articleId);
+    }
+    return newSet;
+  });
+
+    toggleArticleLikeMutation.mutate({
+      articleId,
+      likeData: {userId},
+    }, {
+      onError: () => {
+        setLikedArticles(prev => {
+          const newSet = new Set(prev);
+          if (isCurrentlyLiked) {
+            newSet.add(articleId);
+          } else {
+            newSet.delete(articleId);
+          }
+          return newSet;
+        });
+      }
+    });
   };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  };
+
+  const handleSizeChange = (newSize) => {
+    setSize(newSize);
+    setPage(1);
+  };
+
+  useEffect(() => {
+    if (!pageSizeOptions.includes(size)) {
+      setSize(pageSizeOptions[0] || 6);
+    }
+  }, [pageSizeOptions, size]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <RefreshCw className="w-5 h-5 animate-spin"/>
+          正在加载文章...
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">
+            加载失败: {error?.message || "未知错误"}
+          </p>
+          <Button onClick={() => refetch()}>重试</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home-page min-h-screen bg-background">
@@ -168,159 +184,204 @@ export function RecommendedPostsPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground" />
+                <TrendingUp className="w-5 h-5 text-primary-foreground"/>
               </div>
               <h1 className="text-xl font-bold text-foreground">LocalWay</h1>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="搜索体验、地点或达人..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-background border-border"
-            />
+          {/* Search Bar and Controls */}
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4"/>
+              <Input
+                placeholder="搜索体验或地点..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background border-border"
+              />
+            </div>
+
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">每页显示:</span>
+              <select
+                value={size}
+                onChange={(e) => handleSizeChange(Number(e.target.value))}
+                className="px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                {pageSizeOptions.map((optionSize) => (
+                  <option key={optionSize} value={optionSize}>
+                    {optionSize}篇
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid gap-6">
-          {posts.map((post) => (
-            <Link
-              key={post.article_id}
-              to={`/posts/${post.article_id}`}
-              className="block"
-            >
-              <Card className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-0">
-                  <div className="md:flex">
-                    {/* Image */}
-                    <div className="md:w-80 h-64 md:h-auto relative">
-                      <img
-                        src={
-                          post.image || "/placeholder.svg?height=300&width=400"
-                        }
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <Badge className="bg-primary/90 text-primary-foreground">
-                          {post.category}
-                        </Badge>
-                      </div>
-                    </div>
+        {/* Articles Status Info */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-muted-foreground">
+            第 {page} 页 {articles.length > 0 && `· 显示 ${articles.length} 篇文章`}
+          </div>
+          {debouncedSearchQuery && (
+            <div className="text-sm text-muted-foreground">
+              搜索关键词: "{debouncedSearchQuery}"
+            </div>
+          )}
+        </div>
 
-                    {/* Content */}
-                    <div className="flex-1 p-6">
-                      {/* Author Info */}
-                      <div className="flex items-center gap-3 mb-4">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage
-                            src={post.author.avatar || "/placeholder.svg"}
-                            alt={post.author.name}
+        {articles.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>暂无文章</p>
+            {debouncedSearchQuery && (
+              <p className="mt-2">没有找到包含 "{debouncedSearchQuery}" 的文章</p>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-6">
+              {articles.map((article) => (
+                <Link
+                  key={article.articleId}
+                  to={`/posts/${article.articleId}`}
+                  state={{ article }}
+                  className="block"
+                >
+                  <Card
+                    className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-0">
+                      <div className="md:flex">
+                        {/* Image */}
+                        <div className="md:w-80 h-64 md:h-auto relative">
+                          <img
+                            src={
+                              article.image ||
+                              "/placeholder.svg?height=300&width=400"
+                            }
+                            alt={article.title}
+                            className="w-full h-full object-cover"
                           />
-                          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-card-foreground">
-                              {post.author.name}
-                            </h4>
-                            {post.author.isVerified && (
-                              <Badge variant="secondary" className="text-xs">
-                                认证
-                              </Badge>
-                            )}
+                          <div className="absolute top-3 left-3">
+                            <Badge className="bg-primary/90 text-primary-foreground">
+                              {article.tagList?.[0]?.tagName || "体验"}
+                            </Badge>
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {post.author.location}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 p-6">
+                          {/* Author Info */}
+                          <div className="mb-4">
+                            <UserAvatar userId={article.creatorId}/>
+                          </div>
+
+                          {/* Post Content */}
+                          <div className="mb-4">
+                            <h2 className="text-xl font-bold text-card-foreground mb-2 text-balance">
+                              {article.title}
+                            </h2>
+                            <div className="flex items-center gap-1 mb-2">
+                              <MapPin className="w-3 h-3"/>
+                              {article.address || "位置未知"}
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
+                              {article.content}
+                            </p>
+                          </div>
+
+                          {/* Tags */}
+                          {article.tagList && article.tagList.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {article.tagList.map((tag, index) => (
+                                <Badge
+                                  key={tag.tagId || index}
+                                  variant={index === 0 ? "default" : "outline"}
+                                  className={`text-xs ${
+                                    index === 0
+                                      ? "bg-primary text-primary-foreground"
+                                      : "border-muted hover:bg-muted/50"
+                                  }`}
+                                >
+                                  #{tag.tagName}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleLike(article.articleId, e)}
+                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                                disabled={toggleArticleLikeMutation.isPending}
+                              >
+                                <Heart
+                                  className={`w-4 h-4 transition-all ${
+                                    likedArticles.has(article.articleId)
+                                      ? "fill-red-500 text-red-500"
+                                      : "text-muted-foreground hover:text-red-500" 
+                                  }`}
+                                />
+                                {article.likesNum || 0}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+                              >
+                                <MessageCircle className="w-4 h-4"/>
+                                {article.commentsNum || 0}
+                              </Button>
                             </div>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(post.create_time).toLocaleDateString(
-                            "zh-CN"
-                          )}
-                        </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
 
-                      {/* Post Content */}
-                      <div className="mb-4">
-                        <h2 className="text-xl font-bold text-card-foreground mb-2 text-balance">
-                          {post.title}
-                        </h2>
-                        <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
-                          {post.content}
-                        </p>
-                      </div>
+          {/* Pagination Controls */}
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4"/>
+                上一页
+              </Button>
 
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {post.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-xs border-border mypost-border tag-blue"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-muted-foreground">
+                  第 {page} 页
+                </span>
+              </div>
 
-                      {/* Experience Details */}
-                      <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {post.address}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Badge
-                            variant="secondary"
-                            className="text-xs bg-primary/10 text-primary"
-                          >
-                            地道体验
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleLike(post.article_id, e)}
-                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                          >
-                            <Heart
-                              className={`w-4 h-4 ${post.isLiked ? "fill-red-500 text-red-500" : ""}`}
-                            />
-                            {post.likes_num}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            {post.comments_num}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={articles.length < size}
+                className="flex items-center gap-2"
+              >
+                下一页
+                <ChevronRight className="w-4 h-4"/>
+              </Button>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

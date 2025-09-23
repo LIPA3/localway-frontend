@@ -21,7 +21,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs"
 import { Link } from "react-router"
 import "../../css/CreatorPage.css"
-import api from "../../api/api";
+import { apiClient } from "../../api/Api"
+const api = apiClient
+
 
 export function CreatorProfilePage() {
   const [activeTab, setActiveTab] = useState("posts")
@@ -38,16 +40,16 @@ export function CreatorProfilePage() {
   const getCreatorInfo = async () => {
     try {
       setLoading(true)
-      
+
       const response = await api.get('articles/1');
-      
+
       console.log('API响应:', response);
       console.log('响应数据:', response.data);
-      
+
       if (response.data) {
         // 根据实际后端返回的数据结构调整
         const data = response.data;
-        
+
         // 如果是直接返回数组
         if (Array.isArray(data)) {
           setArticles(data);
@@ -55,7 +57,7 @@ export function CreatorProfilePage() {
             ...prev,
             total: data.length
           }));
-        } 
+        }
         // 如果是分页对象结构
         else if (data.records || data.content || data.data) {
           const records = data.records || data.content || data.data || [];
@@ -71,7 +73,7 @@ export function CreatorProfilePage() {
         else {
           setArticles([data]);
         }
-        
+
         console.log('设置的文章数据:', articles);
       }
     } catch (error) {

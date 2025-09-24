@@ -8,6 +8,7 @@ const routes = [
   route("posts/:id", "routes/posts.$id.jsx"),
   route("/creatorCenter", "routes/CreatorPage.jsx"),
   route("/createArticle", "routes/CreateArticle.jsx"),
+  route("/smartRecommend", "routes/SmartRecommend.jsx"),
 ];
 
 export default routes;

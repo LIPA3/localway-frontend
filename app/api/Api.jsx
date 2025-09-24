@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // API base configuration
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL =
+  import.meta.env.VITE_RAILWAY_BACKEND || "http://localhost:8080";
 
 export let apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -12,20 +13,20 @@ export let apiClient = axios.create({
 });
 
 apiClient.interceptors.response.use(
-   (response) => {
-     // handle response
-     return response;
-   },
-   (error) => {
-     // handle response error
-	const {status, data} = error.response;
+  (response) => {
+    // handle response
+    return response;
+  },
+  (error) => {
+    // handle response error
+    const { status, data } = error.response;
     console.log(status, data);
 
-      if (status === 404) {
-        alert("请求的资源不存在");
-      }
-     return Promise.reject(error);
-   }
+    if (status === 404) {
+      alert("请求的资源不存在");
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Health check
@@ -74,13 +75,13 @@ export const getUserInfo = async (userId) => {
 export const getUserLikedArticles = async (userId) => {
   const response = await apiClient.get(`/likes/articles/${userId}`);
   return response.data;
-}
+};
 
 // Get user's liked comments
 export const getUserLikedComments = async (userId) => {
   const response = await apiClient.get(`/likes/comments/${userId}`);
   return response.data;
-}
+};
 
 // Comments API
 export const getCommentsByArticleId = async (articleId) => {
@@ -117,13 +118,16 @@ export const toggleArticleLike = async (articleId, likeData) => {
 
 // Comment likes API
 export const likeComment = async (commentId, commentLikeRequest) => {
-  const response = await apiClient.post(`/likes/comments/${commentId}`, commentLikeRequest);
+  const response = await apiClient.post(
+    `/likes/comments/${commentId}`,
+    commentLikeRequest
+  );
   return response.data;
 };
 
 export const unlikeComment = async (commentId, commentLikeRequest) => {
   const response = await apiClient.delete(`/likes/comments/${commentId}`, {
-    data: commentLikeRequest
+    data: commentLikeRequest,
   });
   return response.data;
 };

@@ -1,24 +1,36 @@
-import {useEffect, useState} from "react";
-import {Link} from "react-router";
-import {ChevronLeft, ChevronRight, Heart, MapPin, MessageCircle, RefreshCw, Search, TrendingUp,} from "lucide-react";
-import {Button} from "../ui/Button";
-import {Input} from "../ui/Input";
-import {Card, CardContent} from "../ui/Card";
-import {Badge} from "../ui/Badge";
-import {Avatar, AvatarFallback, AvatarImage} from "../ui/Avatar";
-import {useArticles, useToggleArticleLike, useUserInfo, useUserLikedArticles} from "../../hooks/useApi";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  MapPin,
+  MessageCircle,
+  RefreshCw,
+  Search,
+  TrendingUp,
+} from "lucide-react";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
+import { Card, CardContent } from "../ui/Card";
+import { Badge } from "../ui/Badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar";
+import {
+  useArticles,
+  useToggleArticleLike,
+  useUserInfo,
+  useUserLikedArticles,
+} from "../../hooks/useApi";
 
 // Component to display user info with real data
-function UserAvatar({userId, className = ""}) {
-  const {data: userInfo, isLoading} = useUserInfo(userId);
+function UserAvatar({ userId, className = "" }) {
+  const { data: userInfo, isLoading } = useUserInfo(userId);
 
   if (isLoading || !userInfo) {
     return (
       <div className={`flex items-center gap-3 ${className}`}>
         <Avatar className="w-10 h-10">
-          <AvatarFallback>
-            {userId ? `U${userId}` : "U"}
-          </AvatarFallback>
+          <AvatarFallback>{userId ? `U${userId}` : "U"}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -37,9 +49,11 @@ function UserAvatar({userId, className = ""}) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <Avatar className="w-10 h-10">
-        <AvatarImage src="/placeholder.svg" alt={userInfo.userName}/>
+        <AvatarImage src="/placeholder.svg" alt={userInfo.userName} />
         <AvatarFallback>
-          {userInfo.userName ? userInfo.userName.charAt(0).toUpperCase() : `U${userId}`}
+          {userInfo.userName
+            ? userInfo.userName.charAt(0).toUpperCase()
+            : `U${userId}`}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1">
@@ -48,21 +62,22 @@ function UserAvatar({userId, className = ""}) {
             {userInfo.userName || `创作者 #${userId}`}
           </h4>
           <Badge variant="secondary" className="text-xs">
-            {userInfo.role === 'ADMIN' ? '管理员' :
-              userInfo.role === 'CREATOR' ? '创作者' : '认证'}
+            {userInfo.role === "ADMIN"
+              ? "管理员"
+              : userInfo.role === "CREATOR"
+                ? "创作者"
+                : "认证"}
           </Badge>
         </div>
         {userInfo.motto && (
-          <p className="text-sm text-muted-foreground">
-            {userInfo.motto}
-          </p>
+          <p className="text-sm text-muted-foreground">{userInfo.motto}</p>
         )}
       </div>
     </div>
   );
 }
 
-export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
+export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -71,12 +86,17 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
 
   // TODO: Replace with actual userId from auth context/session
   const userId = 1;
-  const { data: userLikedList, isLoading: isUserLikeLoading } = useUserLikedArticles(userId);
+  const { data: userLikedList, isLoading: isUserLikeLoading } =
+    useUserLikedArticles(userId);
 
   console.log("User liked articles:", userLikedList);
 
   useEffect(() => {
-    if (userLikedList && userLikedList.articleIds && Array.isArray(userLikedList.articleIds)) {
+    if (
+      userLikedList &&
+      userLikedList.articleIds &&
+      Array.isArray(userLikedList.articleIds)
+    ) {
       setLikedArticles(new Set(userLikedList.articleIds));
     }
   }, [userLikedList]);
@@ -106,37 +126,40 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
     event.stopPropagation();
     const isCurrentlyLiked = likedArticles.has(articleId);
 
-    setLikedArticles(prev => {
-    const newSet = new Set(prev);
-    if (isCurrentlyLiked) {
-      newSet.delete(articleId);
-    } else {
-      newSet.add(articleId);
-    }
-    return newSet;
-  });
-
-    toggleArticleLikeMutation.mutate({
-      articleId,
-      likeData: {userId},
-    }, {
-      onError: () => {
-        setLikedArticles(prev => {
-          const newSet = new Set(prev);
-          if (isCurrentlyLiked) {
-            newSet.add(articleId);
-          } else {
-            newSet.delete(articleId);
-          }
-          return newSet;
-        });
+    setLikedArticles((prev) => {
+      const newSet = new Set(prev);
+      if (isCurrentlyLiked) {
+        newSet.delete(articleId);
+      } else {
+        newSet.add(articleId);
       }
+      return newSet;
     });
+
+    toggleArticleLikeMutation.mutate(
+      {
+        articleId,
+        likeData: { userId },
+      },
+      {
+        onError: () => {
+          setLikedArticles((prev) => {
+            const newSet = new Set(prev);
+            if (isCurrentlyLiked) {
+              newSet.add(articleId);
+            } else {
+              newSet.delete(articleId);
+            }
+            return newSet;
+          });
+        },
+      }
+    );
   };
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSizeChange = (newSize) => {
@@ -155,7 +178,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <RefreshCw className="w-5 h-5 animate-spin"/>
+          <RefreshCw className="w-5 h-5 animate-spin" />
           正在加载文章...
         </div>
       </div>
@@ -184,7 +207,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground"/>
+                <TrendingUp className="w-5 h-5 text-primary-foreground" />
               </div>
               <h1 className="text-xl font-bold text-foreground">LocalWay</h1>
             </div>
@@ -193,7 +216,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
           {/* Search Bar and Controls */}
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4"/>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="搜索体验或地点..."
                 value={searchQuery}
@@ -204,7 +227,9 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
 
             {/* Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">每页显示:</span>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                每页显示:
+              </span>
               <select
                 value={size}
                 onChange={(e) => handleSizeChange(Number(e.target.value))}
@@ -226,7 +251,8 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
         {/* Articles Status Info */}
         <div className="flex justify-between items-center mb-6">
           <div className="text-sm text-muted-foreground">
-            第 {page} 页 {articles.length > 0 && `· 显示 ${articles.length} 篇文章`}
+            第 {page} 页{" "}
+            {articles.length > 0 && `· 显示 ${articles.length} 篇文章`}
           </div>
           {debouncedSearchQuery && (
             <div className="text-sm text-muted-foreground">
@@ -239,7 +265,9 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
           <div className="text-center py-12 text-muted-foreground">
             <p>暂无文章</p>
             {debouncedSearchQuery && (
-              <p className="mt-2">没有找到包含 "{debouncedSearchQuery}" 的文章</p>
+              <p className="mt-2">
+                没有找到包含 "{debouncedSearchQuery}" 的文章
+              </p>
             )}
           </div>
         ) : (
@@ -252,16 +280,16 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                   state={{ article }}
                   className="block"
                 >
-                  <Card
-                    className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                  <Card className="post-card border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                     <CardContent className="p-0">
                       <div className="md:flex">
                         {/* Image */}
                         <div className="md:w-80 h-64 md:h-auto relative">
                           <img
                             src={
-                              article.image ||
-                              "/placeholder.svg?height=300&width=400"
+                              article.image ?? "https://picsum.photos/400/300"
+                              // article.image ||
+                              // "/placeholder.svg?height=300&width=400"
                             }
                             alt={article.title}
                             className="w-full h-full object-cover"
@@ -277,7 +305,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                         <div className="flex-1 p-6">
                           {/* Author Info */}
                           <div className="mb-4">
-                            <UserAvatar userId={article.creatorId}/>
+                            <UserAvatar userId={article.creatorId} />
                           </div>
 
                           {/* Post Content */}
@@ -286,7 +314,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                               {article.title}
                             </h2>
                             <div className="flex items-center gap-1 mb-2">
-                              <MapPin className="w-3 h-3"/>
+                              <MapPin className="w-3 h-3" />
                               {article.address || "位置未知"}
                             </div>
                             <p className="text-muted-foreground leading-relaxed line-clamp-3 text-pretty">
@@ -315,7 +343,9 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => handleLike(article.articleId, e)}
+                                onClick={(e) =>
+                                  handleLike(article.articleId, e)
+                                }
                                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                                 disabled={toggleArticleLikeMutation.isPending}
                               >
@@ -323,7 +353,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                                   className={`w-4 h-4 transition-all ${
                                     likedArticles.has(article.articleId)
                                       ? "fill-red-500 text-red-500"
-                                      : "text-muted-foreground hover:text-red-500" 
+                                      : "text-muted-foreground hover:text-red-500"
                                   }`}
                                 />
                                 {article.likesNum || 0}
@@ -333,7 +363,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                                 size="sm"
                                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
                               >
-                                <MessageCircle className="w-4 h-4"/>
+                                <MessageCircle className="w-4 h-4" />
                                 {article.commentsNum || 0}
                               </Button>
                             </div>
@@ -346,7 +376,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
               ))}
             </div>
 
-          {/* Pagination Controls */}
+            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-8 pt-6 border-t border-border">
               <Button
                 variant="outline"
@@ -355,7 +385,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                 disabled={page === 1}
                 className="flex items-center gap-2"
               >
-                <ChevronLeft className="w-4 h-4"/>
+                <ChevronLeft className="w-4 h-4" />
                 上一页
               </Button>
 
@@ -373,7 +403,7 @@ export function RecommendedPostsPage({pageSizeOptions = [3, 6, 9, 12, 15]}) {
                 className="flex items-center gap-2"
               >
                 下一页
-                <ChevronRight className="w-4 h-4"/>
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </>

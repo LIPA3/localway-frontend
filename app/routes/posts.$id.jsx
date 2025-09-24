@@ -52,15 +52,20 @@ export default function PostDetail() {
   const [expandedComments, setExpandedComments] = useState(true);
   const [likedArticles, setLikedArticles] = useState(new Set());
   const [likedComments, setLikedComments] = useState(new Set());
+  const [likeCount, setLikeCount] = useState(0);
+
+  const article = location.state?.article;
+
+  useEffect(() => {
+    setLikeCount(article?.likesNum || 0);
+  }, [article]);
 
   // TODO: Replace with actual userId from auth context/session
   const currentUserId = 1;
 
-  const article = location.state?.article;
-
   const {data: userLikedList} = useUserLikedArticles(currentUserId);
 
-  const { data: userLikedComments } = useUserLikedComments(currentUserId);
+  const {data: userLikedComments} = useUserLikedComments(currentUserId);
 
   const {data: creatorInfo} = useUserInfo(article?.creatorId);
 
@@ -113,6 +118,8 @@ export default function PostDetail() {
   const handleLike = () => {
     const isCurrentlyLiked = likedArticles.has(parseInt(id));
 
+    setLikeCount(prev => isCurrentlyLiked ? prev - 1 : prev + 1);
+
     // Optimistic update
     setLikedArticles(prev => {
       const newSet = new Set(prev);
@@ -139,6 +146,7 @@ export default function PostDetail() {
           }
           return newSet;
         });
+        setLikeCount(prev => isCurrentlyLiked ? prev + 1 : prev - 1);
       }
     });
   };
@@ -160,7 +168,7 @@ export default function PostDetail() {
     if (isCurrentlyLiked) {
       unlikeCommentMutation.mutate({
         commentId,
-        commentLikeRequest: { userId: currentUserId }
+        commentLikeRequest: {userId: currentUserId}
       }, {
         onError: () => {
           setLikedComments(prev => new Set(prev).add(commentId));
@@ -169,7 +177,7 @@ export default function PostDetail() {
     } else {
       likeCommentMutation.mutate({
         commentId,
-        commentLikeRequest: { userId: currentUserId }
+        commentLikeRequest: {userId: currentUserId}
       }, {
         onError: () => {
           setLikedComments(prev => {
@@ -325,7 +333,7 @@ export default function PostDetail() {
                           : "text-muted-foreground hover:text-red-500"
                       }`}
                     />
-                    {article.likesNum || 0}
+                    {likeCount}
                   </Button>
                   <Button
                     variant="ghost"

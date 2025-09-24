@@ -10,6 +10,7 @@ const routes = [
   route("/createArticle", "routes/CreateArticle.jsx"),
   route("/smartRecommend", "routes/SmartRecommend.jsx"),
   route("/smartRecommend/result", "routes/SmartRecommendResult.jsx"),
+  route("/savedPlan", "routes/SavedPlan.jsx"),
 ];
 
 export default routes;

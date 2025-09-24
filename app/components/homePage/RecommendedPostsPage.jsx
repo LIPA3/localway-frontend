@@ -328,12 +328,8 @@ export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
                               {article.tagList.map((tag, index) => (
                                 <Badge
                                   key={tag.tagId || index}
-                                  variant={index === 0 ? "default" : "outline"}
-                                  className={`text-xs ${
-                                    index === 0
-                                      ? "bg-primary text-primary-foreground"
-                                      : "border-muted hover:bg-muted/50"
-                                  }`}
+                                  variant="outline"
+                                  className="text-xs mypost-border tag-blue"
                                 >
                                   #{tag.tagName}
                                 </Badge>

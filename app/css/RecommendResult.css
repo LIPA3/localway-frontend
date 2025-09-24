@@ -1,0 +1,48 @@
+/* 结果页专用样式，尽量贴近截图色彩与质感 */
+
+.result-page .section-title-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #ff6a00; /* 橙色小圆点 */
+}
+
+/* 概览统计色彩 */
+.result-page .result-stat-value {
+  font-size: 18px;
+  line-height: 24px;
+}
+.result-page .result-stat-label {
+  color: var(--muted-foreground, #64748b);
+  font-size: 12px;
+}
+.result-page .stat-days .result-stat-value { color: #ff6a00; }
+.result-page .stat-budget .result-stat-value { color: #10b981; }
+.result-page .stat-people .result-stat-value { color: #2563eb; }
+.result-page .stat-rating .result-stat-value { color: #8b5cf6; }
+
+/* 标签胶囊色彩（浅橙边+底） */
+.result-page .result-tag {
+  border-color: #ffd7b5 !important;
+  color: #f97316 !important;
+  background-color: #fff7ed !important;
+}
+
+/* 每日行程 - 右侧绿色状态图标 */
+.result-page .result-status-icon {
+  color: #10b981; /* 绿色 */
+}
+
+/* 卡片边距与内边距微调，使版式更紧凑 */
+.result-page .soft-card .card-header,
+.result-page .soft-card .card-content {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* 标题橙色（接近截图“第X天”颜色） */
+.result-page .day-title {
+  color: #ff6a00;
+}
+
+

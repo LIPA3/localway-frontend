@@ -24,7 +24,9 @@ export function CreatorContentPage() {
   const [tags, setTags] = useState([])
   const [newTag, setNewTag] = useState("")
   const [activeTab, setActiveTab] = useState("edit")
-  
+  // Recommended tags users can click to quickly add
+  const recommendedTags = ["咖啡", "历史", "文化", "美食", "摄影", "亲子", "徒步", "民宿", "手作", "夜市"]
+
   // 图片上传相关状态
   const [uploadedImage, setUploadedImage] = useState("")
   const [uploading, setUploading] = useState(false)
@@ -49,6 +51,14 @@ export function CreatorContentPage() {
     if (e.key === "Enter") {
       e.preventDefault()
       addTag()
+    }
+  }
+
+  const addRecommendedTag = (tag) => {
+    if (!tags.includes(tag)) {
+      setTags(prev => [...prev, tag])
+      // if the input matches the tag, clear it
+      if (newTag.trim() === tag) setNewTag("")
     }
   }
 
@@ -176,7 +186,7 @@ export function CreatorContentPage() {
 
       if (response.status === 200) {
         setPublishSuccess(true)
-        alert('体验发布成功！')
+        alert('体验发布后将后台审核，审核通过后即可在平台展示！')
         
         // 重置表单或跳转到体验详情页
         // 可以根据需要导航到发布成功页面
@@ -447,6 +457,23 @@ export function CreatorContentPage() {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">添加相关标签有助于用户找到你的体验</p>
+
+                  {/* 推荐标签 */}
+                  <div className="mt-4">
+                    <span className="text-sm text-muted-foreground block mb-2">推荐标签</span>
+                    <div className="flex flex-wrap gap-2">
+                      {recommendedTags.map((tag) => (
+                        <Badge 
+                          key={tag} 
+                          variant="outline" 
+                          className="cursor-pointer mypost-border tag-blue"
+                          onClick={() => addRecommendedTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

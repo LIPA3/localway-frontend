@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
-import { Badge } from "../ui/Badge"
 import { Button } from "../ui/Button"
 import { MapPin, Calendar, Users, Wallet, ChevronLeft, Check, Plus } from "lucide-react"
 import AIChat from "./AiChat";
 import { updatePlanItem } from "../../api/Api";
+import { useArticles } from '../../hooks/useApi';
 import "../../css/CreateArticle.css"
 import "../../css/RecommendResult.css"
 
@@ -15,8 +15,7 @@ const mockPlan = {
     days: 3,
     budget: 1,
     people: 1,
-    rating: 4.8,
-    tags: ["城市观光", "历史文化", "特色美食"],
+    rating: 4.8
   },
   days: [
     {
@@ -162,31 +161,59 @@ export default function CustomizationResult() {
   const [plan, setPlan] = useState(mockPlan);
   const s = plan.summary;
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-//   const [updateSuggestion, setUpdateSuggestion] = useState('');
   const [loadedFromSession, setLoadedFromSession] = useState(false);
-  
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('smartRecommendResult');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        console.log('Loaded smartRecommendResult from session:', parsed);
-        // support possible wrapper shapes: { plan }, { data }, or raw plan
-        let parsedPlan = parsed;
-        if (parsed && parsed.plan) parsedPlan = parsed.plan;
-        if (parsed && parsed.data) parsedPlan = parsed.data;
+  const [city, setCity] = useState('');
 
-        if (parsedPlan && (parsedPlan.days || parsedPlan.summary)) {
-          setPlan(parsedPlan);
-          setLoadedFromSession(true);
-        } else {
-          console.warn('session smartRecommendResult found but shape not recognized', parsed);
+  const {
+    data: articleList = [],
+    isLoading: articlesLoading,
+    isError: articlesError,
+    error: articlesErrorObj,
+    refetch: refetchArticles,
+  } = useArticles(1, 3, city || undefined, undefined);
+
+  useEffect(() => {
+    const loadFromSession = async () => {
+      try {
+        const raw = sessionStorage.getItem('smartRecommendResult');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          console.log('Loaded smartRecommendResult from session:', parsed);
+          // support possible wrapper shapes: { plan }, { data }, or raw plan
+          let parsedPlan = parsed;
+          if (parsed && parsed.plan) parsedPlan = parsed.plan;
+          if (parsed && parsed.data) parsedPlan = parsed.data;
+          if (parsedPlan && (parsedPlan.days || parsedPlan.summary)) {
+            setPlan(parsedPlan);
+            setCity(parsedPlan.summary?.toCity || '');
+            setLoadedFromSession(true);
+          } else {
+            console.warn('session smartRecommendResult found but shape not recognized', parsed);
+          }
         }
+      } catch (err) {
+        console.error('读取行程结果失败：', err);
       }
-    } catch (err) {
-      console.error('读取行程结果失败：', err);
-    }
+    };
+
+    // call the async loader
+    loadFromSession();
   }, []);
+
+  // 在页面跳转或刷新时调用 useArticles 接口
+  useEffect(() => {
+    if (refetchArticles) {
+      refetchArticles();
+    }
+  }, [refetchArticles]);
+
+  // Debug: log the API response
+  useEffect(() => {
+    console.log('SmartRecommendResult - articleList:', articleList);
+    console.log('SmartRecommendResult - articlesLoading:', articlesLoading);
+    console.log('SmartRecommendResult - articlesError:', articlesError);
+    console.log('SmartRecommendResult - city:', city);
+  }, [articleList, articlesLoading, articlesError, city]);
 //   const handleSubmitUpdate = () => {
 //     // 这里可以添加提交更新建议的逻辑
 //     console.log('提交的更新建议:', updateSuggestion);
@@ -210,10 +237,10 @@ export default function CustomizationResult() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-transparent"
+                className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
                 onClick={() => setIsAIChatOpen(true)}
               >
-                编辑 
+                ai客服 
               </Button>
             </div>
           </div>
@@ -254,46 +281,8 @@ export default function CustomizationResult() {
                 </CardContent>
               </Card>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              {s.tags.map((t) => (
-                <Badge key={t} variant="secondary" className="mypost-border result-tag">{t}</Badge>
-              ))}
-            </div>
           </CardContent>
         </Card>
-        
-        {/* 行程更新建议输入框 */}
-        {/* <Card className="soft-card mb-6">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 text-blue-500">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 21L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M7.83 7.83l4.24 4.24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 2H5C3.89543 2 3 2.89543 3 4V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <CardTitle className="text-base">行程更新建议</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex gap-2">
-              <textarea
-                className="suggestion-input flex-1 p-2 border border-gray-200 rounded-md"
-                placeholder="您希望对行程做哪些调整？比如：增加美食体验、更换住宿类型等..."
-                value={updateSuggestion}
-                onChange={(e) => setUpdateSuggestion(e.target.value)}
-                rows={3}
-              />
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white self-end whitespace-nowrap px-4"
-                onClick={handleSubmitUpdate}
-              >
-                提交更新
-              </Button>
-            </div>
-          </CardContent>
-        </Card> */}
 
         {/* 详细行程用卡片包裹 */}
         <Card className="soft-card mb-6">
@@ -324,18 +313,51 @@ export default function CustomizationResult() {
           </CardContent>
         </Card>
 
-        {/* 推荐内容占位 */}
+        {/* 推荐内容：使用 useArticles 获取的数据 */}
         <Card className="soft-card mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">你可能会喜欢的真实分享</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border p-3">
-                <div className="h-24 bg-muted rounded mb-3" />
-                <div className="text-sm font-medium">本地城市体验示例 {i}</div>
-                <div className="text-xs text-muted-foreground mt-1">by 某位向导</div>
-                <Button size="sm" variant="outline" className="mt-3 bg-transparent">查看详情</Button>
+            {articlesLoading && (
+              <div className="col-span-1 md:col-span-3 text-center py-6">
+                加载中...
+              </div>
+            )}
+
+            {articlesError && (
+              <div className="col-span-1 md:col-span-3 text-center text-red-500">
+                加载推荐内容失败：{articlesErrorObj?.message || '未知错误'}
+              </div>
+            )}
+
+            {!articlesLoading && !articlesError && articleList.length === 0 && (
+              <div className="col-span-1 md:col-span-3 text-center text-muted-foreground">
+                暂无推荐内容
+              </div>
+            )}
+
+            {!articlesLoading && !articlesError && articleList.map((article) => (
+              <div key={article.articleId || article.id} className="rounded-lg border p-3">
+                <div className="h-24 bg-muted rounded mb-3">
+                  {article.image && (
+                    <img 
+                      src={article.image} 
+                      alt={article.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  )}
+                </div>
+                <div className="text-sm font-medium">{article.title}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  by {article.authorName || '本地向导'}
+                </div>
+                {article.address && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    📍 {article.address}
+                  </div>
+                )}
+                <Button size="sm" variant="outline" className="mt-3 bg-orange-500 hover:bg-orange-600 text-white border-orange-500">查看详情</Button>
               </div>
             ))}
           </CardContent>
@@ -343,7 +365,7 @@ export default function CustomizationResult() {
 
         {/* 底部操作区 */}
         <div className="flex items-center justify-center gap-3 mt-4">
-          <Button variant="outline" className="bg-transparent">保存行程</Button>
+          <Button variant="outline" className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500">保存行程</Button>
         </div>
       </div>
 

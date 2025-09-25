@@ -4,9 +4,13 @@ import SavedItineraries from "../components/smartPage/SavedPlan";
 export default function SavedPlan() {
   const navigate = useNavigate();
 
-  const handleNavigate = (route) => {
+  const handleNavigate = (route, params) => {
     if (route === "smartRecommend") {
-      navigate("/SmartRecommend");
+      if (params && params.planId) {
+        navigate(`/smartRecommend/result?planId=${params.planId}`);
+      } else {
+        navigate("/smartRecommend");
+      }
     }
   };
 

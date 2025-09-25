@@ -164,7 +164,7 @@ const AIChat = ({ isOpen, onClose }) => {
               <div 
                 className={`max-w-[80%] p-3 rounded-lg ${message.role === 'user' ? 'user-message' : 'assistant-message shadow-sm'}`}
               >
-                <p>{message.content}</p>
+                <p style={{ whiteSpace: 'pre-wrap' }}>{message.content}</p>
               </div>
             </div>
           ))}

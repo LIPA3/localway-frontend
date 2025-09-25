@@ -206,9 +206,11 @@ export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img
+                src="../../../public/LocalWay_Icon.png"
+                alt="LocalWay"
+                className="w-8 h-8 rounded-lg"
+              />
               <h1 className="text-xl font-bold text-foreground">LocalWay</h1>
             </div>
           </div>
@@ -245,7 +247,6 @@ export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         {/* Articles Status Info */}

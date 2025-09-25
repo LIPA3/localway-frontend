@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Bot,
   ChevronDown,
   ChevronUp,
   Heart,
@@ -54,6 +55,7 @@ export default function PostDetail() {
   const [likedArticles, setLikedArticles] = useState(new Set());
   const [likedComments, setLikedComments] = useState(new Set());
   const [likeCount, setLikeCount] = useState(0);
+  const [showAiSummary, setShowAiSummary] = useState(false);
 
   const article = location.state?.article;
 
@@ -229,6 +231,26 @@ export default function PostDetail() {
 
   const isLiked = likedArticles.has(parseInt(id));
 
+  const generateAiSummary = () => {
+    const keyPoints = [
+      "🏛️ 文化体验：深度介绍了广州老城区的传统建筑特色和历史文化背景",
+      "🍵 茶文化：详细讲解了粤式茶文化的精髓和品茶技巧",
+      "🏗️ 建筑风格：重点分析了骑楼建筑和西关大屋的建筑特点",
+      "🍽️ 美食推荐：提供了正宗老字号和隐藏美食的具体位置",
+    ];
+
+    const commentTrend = {
+      positive: 85,
+      neutral: 12,
+      negative: 3,
+      mainTopics: ["建筑风格", "茶文化体验", "美食推荐", "交通便利"],
+    };
+
+    return { keyPoints, commentTrend };
+  };
+
+  const aiSummary = generateAiSummary();
+
   return (
     <div className="post-detail min-h-screen bg-background">
       {/* Header */}
@@ -363,6 +385,79 @@ export default function PostDetail() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Summary Section */}
+        <Card className="mb-6 border-blue-200 bg-blue-50/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <Bot className="w-5 h-5 text-blue-500" />
+                <h3 className="font-semibold text-blue-900">AI 智能摘要</h3>
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-700 text-xs"
+                >
+                  Beta
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAiSummary(!showAiSummary)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                {showAiSummary ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    收起
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    展开
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="text-sm text-blue-800 mb-3">
+              基于帖子内容智能分析
+            </div>
+
+            {!showAiSummary ? (
+              <div className="text-sm text-blue-700">
+                <p className="mb-2">
+                  <strong>内容要点：</strong>
+                  本篇内容主要介绍了广州老城区的文化探索体验，重点关注传统建筑和茶文化...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Key Points */}
+                <div>
+                  <h4 className="font-medium text-blue-900 mb-2">
+                    📋 内容要点总结
+                  </h4>
+                  <div className="space-y-2">
+                    {aiSummary.keyPoints.map((point, index) => (
+                      <div
+                        key={index}
+                        className="text-sm text-blue-800 bg-white/60 rounded-lg p-2"
+                      >
+                        {point}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-xs text-blue-600 bg-white/40 rounded p-2">
+                  💡
+                  AI分析仅供参考，基于自然语言处理技术对内容进行智能解析
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

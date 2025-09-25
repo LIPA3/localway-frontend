@@ -114,20 +114,6 @@ export function CreatorProfilePage() {
               </div>
               <h1 className="text-xl font-bold text-foreground">创作者中心</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <Link to="/creator-edit">
-                <Button variant="outline" size="sm">
-                  <Edit className="w-4 h-4 mr-2" />
-                  编辑内容
-                </Button>
-              </Link>
-              <Link to="/createArticle">
-                <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  创建新体验
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </header>

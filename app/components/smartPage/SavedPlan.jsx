@@ -23,22 +23,23 @@ const parsePlanContent = (planContent, planId, createTime) => {
     let destination = "未知目的地";
     if (content.days && content.days.length > 0) {
       const firstDayItems = content.days[0].items || [];
-      const locationItem = firstDayItems.find(item => item.location);
+      const locationItem = firstDayItems.find((item) => item.location);
       if (locationItem) {
         // Extract city name from location string (e.g., "北京市东城区" -> "北京")
-        const locationMatch = locationItem.location.match(/^([^市]+市?)|^([^区]+)/);
+        const locationMatch =
+          locationItem.location.match(/^([^市]+市?)|^([^区]+)/);
         if (locationMatch) {
           destination = locationMatch[1] || locationMatch[2];
-          destination = destination.replace('市', '');
+          destination = destination.replace("市", "");
         }
       }
     }
 
     // Generate thumbnail based on destination or use default
     const thumbnails = {
-      "北京": "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-      "广州": "https://images.unsplash.com/photo-1672891700952-def7c93c3f13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-      "深圳": "https://images.unsplash.com/photo-1559515068-3a3588702a35?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      北京: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      广州: "https://images.unsplash.com/photo-1672891700952-def7c93c3f13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      深圳: "https://images.unsplash.com/photo-1559515068-3a3588702a35?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
     };
 
     // Extract highlights from days or tags
@@ -47,31 +48,32 @@ const parsePlanContent = (planContent, planId, createTime) => {
       highlights = summary.tags;
     } else if (content.days && content.days.length > 0) {
       // Extract highlights from day titles or item titles
-      highlights = content.days.slice(0, 4).map(day =>
-        day.title || `第${content.days.indexOf(day) + 1}天行程`
-      );
+      highlights = content.days
+        .slice(0, 4)
+        .map((day) => day.title || `第${content.days.indexOf(day) + 1}天行程`);
     }
 
     return {
       id: planId.toString(),
-      title: content.days && content.days.length > 0
-        ? `${destination}${summary.days || content.days.length}日游`
-        : `${destination}文化深度游`,
+      title:
+        content.days && content.days.length > 0
+          ? `${destination}${summary.days || content.days.length}日游`
+          : `${destination}文化深度游`,
       destination,
       duration: `${summary.days || content.days?.length || 3}天${(summary.days || content.days?.length || 3) - 1}晚`,
       cost: summary.budget?.toString() || "0",
       travelers: summary.people?.toString() || "2",
-      savedAt: new Date(createTime).toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      savedAt: new Date(createTime).toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }),
       thumbnail: thumbnails[destination] || thumbnails["北京"],
       highlights: highlights.slice(0, 4),
-      rawContent: content
+      rawContent: content,
     };
   } catch (error) {
-    console.error('Error parsing plan content:', error);
+    console.error("Error parsing plan content:", error);
     return {
       id: planId.toString(),
       title: "解析失败的行程",
@@ -79,10 +81,11 @@ const parsePlanContent = (planContent, planId, createTime) => {
       duration: "未知",
       cost: "0",
       travelers: "1",
-      savedAt: new Date(createTime).toLocaleDateString('zh-CN'),
-      thumbnail: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      savedAt: new Date(createTime).toLocaleDateString("zh-CN"),
+      thumbnail:
+        "https://images.unsplash.com/photo-1488646953014-85cb44e25828?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
       highlights: ["数据解析失败"],
-      rawContent: null
+      rawContent: null,
     };
   }
 };
@@ -103,7 +106,7 @@ export default function SavedItineraries({ onNavigate }) {
   const savedItineraries = useMemo(() => {
     if (!plansData || !Array.isArray(plansData)) return [];
 
-    return plansData.map(plan =>
+    return plansData.map((plan) =>
       parsePlanContent(plan.planContent, plan.planId, plan.createTime)
     );
   }, [plansData]);
@@ -113,12 +116,12 @@ export default function SavedItineraries({ onNavigate }) {
       try {
         await deleteTimeMutation.mutateAsync({
           planId: parseInt(id),
-          userId: userId
+          userId: userId,
         });
         // The mutation will automatically invalidate and refetch the plans
       } catch (error) {
-        console.error('删除行程失败:', error);
-        alert('删除行程失败，请稍后重试');
+        console.error("删除行程失败:", error);
+        alert("删除行程失败，请稍后重试");
       }
     }
   };
@@ -320,7 +323,11 @@ export default function SavedItineraries({ onNavigate }) {
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
-                          onClick={() => onNavigate("planDetail", itinerary.id)}
+                          onClick={() =>
+                            onNavigate("smartRecommend", {
+                              planId: itinerary.id,
+                            })
+                          }
                           className="bg-orange-500 hover:bg-orange-600 text-white"
                         >
                           <Eye className="w-4 h-4 mr-2" />

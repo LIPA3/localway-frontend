@@ -44,8 +44,12 @@ export const chatWithAI = async (message) => {
     // 直接返回响应数据，并进行基本格式化
     let content = response.data;
     
-    // 处理特殊字符，如星号
-    content = content.replace(/\*/g, "").replace(/\n/g, "\n").replace(/\t/g, "\t");
+    // 处理特殊字符和换行符
+    content = content
+      .replace(/\*/g, "") // 移除星号
+      .replace(/\\n/g, "\n\n") // 将 \n 转换为真正的换行符
+      .replace(/\t/g, "    "); // 将制表符转换为空格
+    
     return content;
   } catch (error) {
     console.error('API调用失败:', error);

@@ -333,7 +333,7 @@ export default function CustomizationResult() {
 
         {/* 底部操作区 */}
         <div className="flex items-center justify-center gap-3 mt-4">
-          <Button variant="outline" className="bg-transparent">保存行程</Button>
+          <Button variant="outline" className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500">保存行程</Button>
         </div>
       </div>
 

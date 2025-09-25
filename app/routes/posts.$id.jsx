@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from "react-router";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import {
   ArrowLeft,
   Bot,
@@ -29,6 +29,8 @@ import {
   useUserLikedArticles,
   useUserLikedComments,
 } from "../hooks/useApi";
+import { useQuery } from "@tanstack/react-query";
+import { getArticleById } from "../api/Api";
 import "../css/PostDetail.css";
 
 // Component to fetch user info for comments and replies
@@ -57,7 +59,15 @@ export default function PostDetail() {
   const [likeCount, setLikeCount] = useState(0);
   const [showAiSummary, setShowAiSummary] = useState(false);
 
-  const article = location.state?.article;
+  // Fetch article by ID using the API
+  const { data: fetchedArticle, isLoading: articleLoading, isError: articleError } = useQuery({
+    queryKey: ["article", id],
+    queryFn: () => getArticleById(parseInt(id)),
+    enabled: !!id,
+  });
+
+  // Use fetched article if available, otherwise fallback to location state
+  const article = fetchedArticle || location.state?.article;
 
   useEffect(() => {
     setLikeCount(article?.likesNum || 0);
@@ -96,12 +106,44 @@ export default function PostDetail() {
     }
   }, [userLikedComments]);
 
+
   // Mutations
   const createCommentMutation = useCreateComment();
   const createReplyMutation = useCreateReply();
   const toggleArticleLikeMutation = useToggleArticleLike();
   const likeCommentMutation = useLikeComment();
   const unlikeCommentMutation = useUnlikeComment();
+
+  // Show loading state while fetching article
+  if (articleLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">加载文章中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if article fetch failed
+  if (articleError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-4">
+            加载文章失败
+          </h1>
+          <p className="text-muted-foreground mb-4">
+            无法获取文章信息，请稍后重试
+          </p>
+          <Link to="/">
+            <Button variant="outline">返回首页</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Show not found state if no article data
   if (!article) {
@@ -112,7 +154,7 @@ export default function PostDetail() {
             文章未找到
           </h1>
           <p className="text-muted-foreground mb-4">
-            请从文章列表页面访问此页面
+            请求的文章不存在
           </p>
           <Link to="/">
             <Button variant="outline">返回首页</Button>

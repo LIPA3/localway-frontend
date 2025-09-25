@@ -120,15 +120,19 @@ export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
 
   const toggleArticleLikeMutation = useToggleArticleLike();
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setPage(1);
-    }, 500);
+  // Handle manual search trigger
+  const handleSearch = () => {
+    setDebouncedSearchQuery(searchQuery);
+    setPage(1);
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Handle Enter key press for search
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+      setSearchQuery('');
+    }
+  };
 
   const handleLike = (articleId, event) => {
     event.preventDefault();
@@ -229,9 +233,10 @@ export function RecommendedPostsPage({ pageSizeOptions = [3, 6, 9, 12, 15] }) {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="搜索体验或地点..."
+                placeholder="搜索体验或地点... "
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="pl-10 bg-background border-border"
               />
             </div>

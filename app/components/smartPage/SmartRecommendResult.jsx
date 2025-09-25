@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/Button"
 import { MapPin, Calendar, Users, Wallet, ChevronLeft, Check, Plus } from "lucide-react"
@@ -158,6 +159,7 @@ function DayCard({ day, dayIndex, onItemUpdate }) {
 }
 
 export default function CustomizationResult() {
+  const navigate = useNavigate();
   const [plan, setPlan] = useState(mockPlan);
   const s = plan.summary;
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
@@ -207,19 +209,16 @@ export default function CustomizationResult() {
     }
   }, [refetchArticles]);
 
-  // Debug: log the API response
   useEffect(() => {
     console.log('SmartRecommendResult - articleList:', articleList);
     console.log('SmartRecommendResult - articlesLoading:', articlesLoading);
     console.log('SmartRecommendResult - articlesError:', articlesError);
     console.log('SmartRecommendResult - city:', city);
   }, [articleList, articlesLoading, articlesError, city]);
-//   const handleSubmitUpdate = () => {
-//     // 这里可以添加提交更新建议的逻辑
-//     console.log('提交的更新建议:', updateSuggestion);
-//     // 可以显示一个成功提示或者清空输入框
-//     setUpdateSuggestion('');
-//   };
+
+  const handleViewDetails = (articleId) => {
+    navigate(`/posts/${articleId}`);
+  };
   
   return (
     <div className="result-page min-h-screen bg-background">
@@ -357,7 +356,14 @@ export default function CustomizationResult() {
                     📍 {article.address}
                   </div>
                 )}
-                <Button size="sm" variant="outline" className="mt-3 bg-orange-500 hover:bg-orange-600 text-white border-orange-500">查看详情</Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="mt-3 bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                  onClick={() => handleViewDetails(article.articleId || article.id)}
+                >
+                  查看详情
+                </Button>
               </div>
             ))}
           </CardContent>

@@ -192,3 +192,8 @@ export const deletePlan = async (planId, userId) => {
   });
   return response.data;
 };
+
+export const getArticleById = async (articleId) => {
+  const response = await apiClient.get(`/articles/getById/${articleId}`);
+  return response.data;
+};

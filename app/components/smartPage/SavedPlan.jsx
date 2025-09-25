@@ -92,6 +92,13 @@ export default function SavedItineraries({ onNavigate }) {
   const { data: plansData, isLoading, error, refetch } = usePlans(userId);
   const deleteTimeMutation = useDeletePlan();
 
+  const [planId, setPlanId] = useState('');
+  const raw = sessionStorage.getItem('smartRecommendResult');
+   if (raw) {
+          const parsed = JSON.parse(raw);
+          console.log('Loaded smartRecommendResult from session:', parsed);
+          
+   }
   // Transform backend data to component format
   const savedItineraries = useMemo(() => {
     if (!plansData || !Array.isArray(plansData)) return [];

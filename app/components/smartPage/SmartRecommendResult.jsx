@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import AIChat from "./AiChat";
 import { updatePlanItem } from "../../api/Api";
-import { useArticles, usePlan } from "../../hooks/useApi";
+import { useArticles, usePlan, useUpdatePlan } from "../../hooks/useApi";
 import "../../css/CreateArticle.css";
 import "../../css/RecommendResult.css";
 
@@ -123,16 +123,8 @@ function InlineItemEditor({ item, dayIndex, itemIndex, onItemUpdate }) {
     const newVal = local[field];
     if (newVal === item[field]) return;
 
-    // Optimistic update
+    // Optimistic update - update the UI immediately
     onItemUpdate?.(dayIndex, itemIndex, { [field]: newVal });
-
-    if (item.id) {
-      try {
-        await updatePlanItem(item.id, { [field]: newVal });
-      } catch (err) {
-        console.error("updatePlanItem error", err);
-      }
-    }
   };
 
   const onKey = (e, field) => {
@@ -228,6 +220,8 @@ export default function CustomizationResult() {
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [loadedFromSession, setLoadedFromSession] = useState(false);
   const [city, setCity] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // "saved", "saving", "unsaved", null (initial/loading)
 
   // Fetch specific plan data using planId if provided
   const {
@@ -235,6 +229,9 @@ export default function CustomizationResult() {
     isLoading: planLoading,
     error: planError,
   } = usePlan(planId, userId);
+
+  // Hook for updating the plan
+  const updatePlanMutation = useUpdatePlan();
 
   const {
     data: articleList = [],
@@ -246,16 +243,18 @@ export default function CustomizationResult() {
 
   useEffect(() => {
     if (planId && planData) {
-      // Load plan from API response
       try {
         const parsedPlan = JSON.parse(planData.planContent);
         setPlan(parsedPlan);
         setCity(parsedPlan.summary?.toCity || "");
         setLoadedFromSession(true);
+        // Don't set saveStatus to "saved" on initial load - let it remain null
+        // Only show "已保存" after user makes changes and saves them
       } catch (err) {
         console.error("解析计划数据失败：", err);
+        setSaveStatus("unsaved");
       }
-    } else {
+    } else if (!planId) {
       // Fallback to session storage if no planId
       const loadFromSession = async () => {
         try {
@@ -271,19 +270,23 @@ export default function CustomizationResult() {
               setPlan(parsedPlan);
               setCity(parsedPlan.summary?.toCity || "");
               setLoadedFromSession(true);
+              setSaveStatus("unsaved");
             } else {
               console.warn(
                 "session smartRecommendResult found but shape not recognized",
                 parsed
               );
+              setSaveStatus("unsaved");
             }
+          } else {
+            setSaveStatus("unsaved");
           }
         } catch (err) {
           console.error("读取行程结果失败：", err);
+          setSaveStatus("unsaved");
         }
       };
 
-      // call the async loader
       loadFromSession();
     }
   }, [planId, planData]);
@@ -303,6 +306,67 @@ export default function CustomizationResult() {
     console.log("SmartRecommendResult - city:", city);
   }, [articleList, articlesLoading, articlesError, city]);
 
+  // Function to save the plan manually
+  const handleSavePlan = async () => {
+    if (!planId || saveStatus === "saved") {
+      return;
+    }
+
+    setSaveStatus("saving");
+    try {
+      const planDataToSave = {
+        userId: userId,
+        planName: `${city || "未知城市"}旅行计划`,
+        planContent: JSON.stringify(plan),
+      };
+
+      await updatePlanMutation.mutateAsync({
+        planId: planId,
+        planData: planDataToSave,
+      });
+
+      setHasUnsavedChanges(false);
+      setSaveStatus("saved");
+
+      alert("行程已成功保存！");
+    } catch (error) {
+      console.error("保存行程失败:", error);
+      setSaveStatus("unsaved");
+      alert("保存行程失败，请重试");
+    }
+  };
+
+  useEffect(() => {
+    if (!hasUnsavedChanges || !planId) return;
+
+    setSaveStatus("unsaved");
+
+    const autoSaveTimer = setTimeout(async () => {
+      setSaveStatus("saving");
+      try {
+        const planDataToSave = {
+          userId: userId,
+          planName: `${city || "未知城市"}旅行计划`,
+          planContent: JSON.stringify(plan),
+        };
+
+        await updatePlanMutation.mutateAsync({
+          planId: planId,
+          planData: planDataToSave,
+        });
+
+        setHasUnsavedChanges(false);
+        setSaveStatus("saved");
+        console.log("行程已自动保存");
+      } catch (error) {
+        console.error("自动保存失败:", error);
+        setSaveStatus("unsaved");
+      }
+    }, 2000);
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [plan, hasUnsavedChanges, planId, updatePlanMutation, userId, city]);
+
   // Loading state for plan data
   if (planLoading) {
     return (
@@ -315,7 +379,6 @@ export default function CustomizationResult() {
     );
   }
 
-  // Error state for plan data
   if (planError) {
     return (
       <div className="result-page min-h-screen bg-background flex items-center justify-center">
@@ -342,6 +405,19 @@ export default function CustomizationResult() {
               </div>
               <h1 className="text-xl font-bold text-foreground">
                 智能定制结果
+                {saveStatus === "saving" && (
+                  <span className="ml-2 text-blue-500 text-sm">
+                    • 保存中...
+                  </span>
+                )}
+                {saveStatus === "unsaved" && (
+                  <span className="ml-2 text-orange-500 text-sm">
+                    • 有未保存的更改
+                  </span>
+                )}
+                {saveStatus === "saved" && (
+                  <span className="ml-2 text-green-500 text-sm">• 已保存</span>
+                )}
               </h1>
             </div>
             <div className="flex items-center gap-2">
@@ -444,6 +520,7 @@ export default function CustomizationResult() {
                           );
                           return next;
                         });
+                        setHasUnsavedChanges(true);
                       }}
                     />
                   </div>
@@ -520,9 +597,30 @@ export default function CustomizationResult() {
         <div className="flex items-center justify-center gap-3 mt-4">
           <Button
             variant="outline"
-            className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+            className={`${
+              saveStatus === "unsaved"
+                ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                : saveStatus === "saving"
+                  ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                  : saveStatus === "saved"
+                    ? "bg-green-500 hover:bg-green-600 text-white border-green-500"
+                    : "bg-gray-400 hover:bg-gray-500 text-white border-gray-400"
+            } ${saveStatus === "saving" ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={handleSavePlan}
+            disabled={
+              saveStatus === "saved" ||
+              !planId ||
+              saveStatus === "saving" ||
+              saveStatus === null
+            }
           >
-            保存行程
+            {saveStatus === "saving"
+              ? "保存中..."
+              : saveStatus === "unsaved"
+                ? "手动保存"
+                : saveStatus === "saved"
+                  ? "已保存"
+                  : "保存行程"}
           </Button>
         </div>
       </div>

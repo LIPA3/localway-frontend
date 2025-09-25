@@ -11,6 +11,7 @@ const routes = [
   route("/smartRecommend", "routes/SmartRecommend.jsx"),
   route("/smartRecommend/result", "routes/SmartRecommendResult.jsx"),
   route("/savedPlan", "routes/SavedPlan.jsx"),
+  route("/planDetail/:planId", "routes/PlanDetail.jsx"),
 ];
 
 export default routes;

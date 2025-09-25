@@ -217,8 +217,28 @@ export function CreatorProfilePage() {
                         />
                       </div>
                       <CardContent className="p-4">
-
-                        <h4 className="font-semibold mb-2 line-clamp-2">{post.title}</h4>
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold line-clamp-2 flex-1">{post.title}</h4>
+                          {post.status && (
+                            <Badge 
+                              variant="outline" 
+                              className={`ml-2 text-xs ${
+                                post.status === 'pending' 
+                                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
+                                  : post.status === 'approved' 
+                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                    : 'bg-red-50 text-red-700 border-red-200'
+                              }`}
+                            >
+                              {post.status === 'pending' 
+                                ? '审核中' 
+                                : post.status === 'approved' 
+                                  ? '审核通过' 
+                                  : '审核不通过'
+                              }
+                            </Badge>
+                          )}
+                        </div>
 
                         <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
                           <MapPin className="w-3 h-3" />

@@ -37,7 +37,7 @@ function UserAvatar({ userId, className = "" }) {
             <h4 className="font-medium text-card-foreground">
               {isLoading ? "加载中..." : `创作者 #${userId || "Unknown"}`}
             </h4>
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 border-orange-200">
               认证
             </Badge>
           </div>
@@ -61,7 +61,16 @@ function UserAvatar({ userId, className = "" }) {
           <h4 className="font-medium text-card-foreground">
             {userInfo.userName || `创作者 #${userId}`}
           </h4>
-          <Badge variant="secondary" className="text-xs">
+          <Badge 
+            variant="secondary" 
+            className={`text-xs ${
+              userInfo.role === "ADMIN"
+                ? "bg-purple-100 text-purple-800 border-purple-200"
+                : userInfo.role === "CREATOR"
+                  ? "bg-orange-100 text-orange-800 border-orange-200"
+                  : "bg-orange-100 text-orange-800 border-orange-200"
+            }`}
+          >
             {userInfo.role === "ADMIN"
               ? "管理员"
               : userInfo.role === "CREATOR"

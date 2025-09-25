@@ -15,7 +15,7 @@ import { apiClient } from "../../api/Api"
 const api = apiClient
 
 export function CreatorContentPage() {
-  const locations = ["北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
+  const locations = ["北京", "上海", "广州", "珠海","深圳", "成都", "杭州", "西安", "南京", "武汉", "重庆"]
 
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -187,7 +187,7 @@ export function CreatorContentPage() {
       if (response.status === 200) {
         setPublishSuccess(true)
         alert('体验发布后将后台审核，审核通过后即可在平台展示！')
-        
+        window.location.href = '/creatorCenter';
         // 重置表单或跳转到体验详情页
         // 可以根据需要导航到发布成功页面
         console.log('发布成功')

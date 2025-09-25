@@ -9,7 +9,7 @@ export let apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 60000,
 });
 
 apiClient.interceptors.response.use(
@@ -150,6 +150,18 @@ export const unlikeComment = async (commentId, commentLikeRequest) => {
   const response = await apiClient.delete(`/likes/comments/${commentId}`, {
     data: commentLikeRequest,
   });
+  return response.data;
+};
+
+export const aiGenerateRoute = async (payload) => {
+  const response = await apiClient.post('/custom-trips', payload);
+  return response;
+};
+
+// Update itinerary/plan item API - backend should accept PATCH to /plans/items/{itemId}
+export const updatePlanItem = async (itemId, updateData) => {
+  // updateData may contain { time, title, desc }
+  const response = await apiClient.patch(`/plans/items/${itemId}`, updateData);
   return response.data;
 };
 

@@ -40,18 +40,15 @@ export const chatWithAI = async (message) => {
   try {
     const response = await apiClient.get(`/chat?message=${encodeURIComponent(message)}`);
     // 解析后端返回的嵌套JSON结构
-    const data = response.data;
-    
-    // 检查数据结构并提取content
-    if (data && data.response && data.response.content) {
-      return data.response.content;
-    } else if (typeof data === 'string') {
+    if (response.data && response.data.response && response.data.response.content) {
+      return response.data.response.content;
+    } else if (typeof response.data === 'string') {
       // 如果直接返回字符串
-      return data;
+      return response.data;
     } else {
       // 兜底方案
-      console.warn('Unexpected response format:', data);
-      return "抱歉，我暂时无法处理您的请求。请确保后端服务正在运行，然后稍后再试。";
+      console.warn('Unexpected response format:', response.data);
+      return "抱歉，我暂时无法处理您的请求。请稍后再试。";
     }
   } catch (error) {
     console.error('API调用失败:', error);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -11,36 +11,201 @@ import {
 import { Button } from "../ui/Button";
 import { Card, CardContent } from "../ui/Card";
 import { Badge } from "../ui/Badge";
+import { usePlans, useDeletePlan } from "../../hooks/useApi";
 
-const mockSavedItineraries = [
-  {
-    id: "1",
-    title: "广州文化深度游",
-    destination: "广州",
-    duration: "3天2晚",
-    cost: "4800",
-    travelers: "2",
-    savedAt: "2024年1月15日",
-    thumbnail:
-      "https://images.unsplash.com/photo-1672891700952-def7c93c3f13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0cmFkaXRpb25hbCUyMGNoaW5lc2UlMjB0ZWElMjBjZXJlbW9ueXxlbnwxfHx8fDE3NTg1NDM0ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    highlights: [
-      "陈家祠堂建筑艺术",
-      "荔湾湖茶文化体验",
-      "沙面岛历史漫步",
-      "西关大屋探秘",
-    ],
-  },
-];
+// Helper function to parse plan content and extract information
+const parsePlanContent = (planContent, planId, createTime) => {
+  try {
+    const content = JSON.parse(planContent);
+    const summary = content.summary || {};
+
+    // Extract destination from the first day's items or default
+    let destination = "未知目的地";
+    if (content.days && content.days.length > 0) {
+      const firstDayItems = content.days[0].items || [];
+      const locationItem = firstDayItems.find(item => item.location);
+      if (locationItem) {
+        // Extract city name from location string (e.g., "北京市东城区" -> "北京")
+        const locationMatch = locationItem.location.match(/^([^市]+市?)|^([^区]+)/);
+        if (locationMatch) {
+          destination = locationMatch[1] || locationMatch[2];
+          destination = destination.replace('市', '');
+        }
+      }
+    }
+
+    // Generate thumbnail based on destination or use default
+    const thumbnails = {
+      "北京": "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "广州": "https://images.unsplash.com/photo-1672891700952-def7c93c3f13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "深圳": "https://images.unsplash.com/photo-1559515068-3a3588702a35?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    };
+
+    // Extract highlights from days or tags
+    let highlights = [];
+    if (summary.tags && Array.isArray(summary.tags)) {
+      highlights = summary.tags;
+    } else if (content.days && content.days.length > 0) {
+      // Extract highlights from day titles or item titles
+      highlights = content.days.slice(0, 4).map(day =>
+        day.title || `第${content.days.indexOf(day) + 1}天行程`
+      );
+    }
+
+    return {
+      id: planId.toString(),
+      title: content.days && content.days.length > 0
+        ? `${destination}${summary.days || content.days.length}日游`
+        : `${destination}文化深度游`,
+      destination,
+      duration: `${summary.days || content.days?.length || 3}天${(summary.days || content.days?.length || 3) - 1}晚`,
+      cost: summary.budget?.toString() || "0",
+      travelers: summary.people?.toString() || "2",
+      savedAt: new Date(createTime).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      thumbnail: thumbnails[destination] || thumbnails["北京"],
+      highlights: highlights.slice(0, 4),
+      rawContent: content
+    };
+  } catch (error) {
+    console.error('Error parsing plan content:', error);
+    return {
+      id: planId.toString(),
+      title: "解析失败的行程",
+      destination: "未知",
+      duration: "未知",
+      cost: "0",
+      travelers: "1",
+      savedAt: new Date(createTime).toLocaleDateString('zh-CN'),
+      thumbnail: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      highlights: ["数据解析失败"],
+      rawContent: null
+    };
+  }
+};
 
 export default function SavedItineraries({ onNavigate }) {
-  const [savedItineraries, setSavedItineraries] =
-    useState(mockSavedItineraries);
+  const userId = 1; // Using userId = 1 as specified
+  const { data: plansData, isLoading, error, refetch } = usePlans(userId);
+  const deleteTimeMutation = useDeletePlan();
 
-  const handleDeleteItinerary = (id) => {
+  // Transform backend data to component format
+  const savedItineraries = useMemo(() => {
+    if (!plansData || !Array.isArray(plansData)) return [];
+
+    return plansData.map(plan =>
+      parsePlanContent(plan.planContent, plan.planId, plan.createTime)
+    );
+  }, [plansData]);
+
+  const handleDeleteItinerary = async (id) => {
     if (confirm("确定要删除这个行程吗？")) {
-      setSavedItineraries((prev) => prev.filter((item) => item.id !== id));
+      try {
+        await deleteTimeMutation.mutateAsync({
+          planId: parseInt(id),
+          userId: userId
+        });
+        // The mutation will automatically invalidate and refetch the plans
+      } catch (error) {
+        console.error('删除行程失败:', error);
+        alert('删除行程失败，请稍后重试');
+      }
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => onNavigate("smart")}
+                  className="p-2"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold">L</span>
+                  </div>
+                  <span className="text-xl font-bold text-orange-500">
+                    保存的行程
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-500">加载中...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => onNavigate("smart")}
+                  className="p-2"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold">L</span>
+                  </div>
+                  <span className="text-xl font-bold text-orange-500">
+                    保存的行程
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <div className="text-red-500 mb-4">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-500 mb-2">
+                加载失败
+              </h3>
+              <p className="text-gray-400 mb-4">
+                无法获取行程数据，请检查网络连接
+              </p>
+              <Button
+                onClick={() => refetch()}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                重试
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,6 +327,7 @@ export default function SavedItineraries({ onNavigate }) {
                           variant="ghost"
                           onClick={() => handleDeleteItinerary(itinerary.id)}
                           className="text-red-500 hover:text-red-700"
+                          disabled={deleteTimeMutation.isPending}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

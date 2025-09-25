@@ -12,6 +12,11 @@ import {
   getUserInfo,
   getUserLikedArticles,
   getUserLikedComments,
+  getPlans,
+  getPlan,
+  createPlan,
+  updatePlan,
+  deletePlan,
 } from "../api/Api";
 
 // Articles hooks
@@ -141,6 +146,60 @@ export const useUnlikeComment = () => {
       queryClient.invalidateQueries(["likes/comments"]);
       // Also invalidate comments to refresh like counts
       queryClient.invalidateQueries(["comments"]);
+    },
+  });
+};
+
+// Plans hooks
+export const usePlans = (userId) => {
+  return useQuery({
+    queryKey: ["plans", userId],
+    queryFn: () => getPlans(userId),
+    enabled: !!userId,
+  });
+};
+
+export const usePlan = (planId, userId) => {
+  return useQuery({
+    queryKey: ["plan", planId, userId],
+    queryFn: () => getPlan(planId, userId),
+    enabled: !!planId && !!userId,
+  });
+};
+
+export const useCreatePlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createPlan,
+    onSuccess: () => {
+      // Invalidate plans to refresh the list
+      queryClient.invalidateQueries(["plans"]);
+    },
+  });
+};
+
+export const useUpdatePlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, planData }) => updatePlan(planId, planData),
+    onSuccess: () => {
+      // Invalidate plans to refresh the list
+      queryClient.invalidateQueries(["plans"]);
+      queryClient.invalidateQueries(["plan"]);
+    },
+  });
+};
+
+export const useDeletePlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ planId, userId }) => deletePlan(planId, userId),
+    onSuccess: () => {
+      // Invalidate plans to refresh the list
+      queryClient.invalidateQueries(["plans"]);
     },
   });
 };

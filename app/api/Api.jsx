@@ -155,3 +155,31 @@ export const unlikeComment = async (commentId, commentLikeRequest) => {
 
 // Export the configured axios instance as default for backward compatibility
 export default apiClient;
+
+// Plans API
+export const getPlans = async (userId) => {
+  const response = await apiClient.get(`/plans?userId=${userId}`);
+  return response.data;
+};
+
+export const getPlan = async (planId, userId) => {
+  const response = await apiClient.get(`/plans/${planId}?userId=${userId}`);
+  return response.data;
+};
+
+export const createPlan = async (planData) => {
+  const response = await apiClient.post("/plans", planData);
+  return response.data;
+};
+
+export const updatePlan = async (planId, planData) => {
+  const response = await apiClient.put(`/plans/${planId}`, planData);
+  return response.data;
+};
+
+export const deletePlan = async (planId, userId) => {
+  const response = await apiClient.delete(`/plans/${planId}`, {
+    data: userId
+  });
+  return response.data;
+};

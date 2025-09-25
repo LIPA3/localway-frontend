@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, Mic, X, RefreshCw } from 'lucide-react';
 import { chatWithAI } from '../../api/Api';
 
@@ -6,6 +6,11 @@ const AIChat = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // 初始化消息历史
   useEffect(() => {
@@ -38,6 +43,7 @@ const AIChat = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem('aiChatMessages', JSON.stringify(messages));
+      scrollToBottom();
     }
   }, [messages]);
 
@@ -175,6 +181,7 @@ const AIChat = ({ isOpen, onClose }) => {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* 输入区域 */}

@@ -20,7 +20,7 @@ export default function Home() {
           <Button
             variant="default"
             size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white shadow-lg backdrop-blur-sm"
+            className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg backdrop-blur-sm"
           >
             我的旅游计划
           </Button>

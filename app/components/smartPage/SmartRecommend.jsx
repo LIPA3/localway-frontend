@@ -10,6 +10,7 @@ import { Label } from "../ui/Label"
 import { Badge } from "../ui/Badge"
 import { MapPin, Calendar, Users, Wallet, Send, Save } from "lucide-react"
 import "../../css/CreateArticle.css"
+import { aiGenerateRoute } from "../../api/Api"
 
 const featurePresets = [
   { key: "relax", emoji: "🌿", title: "轻松悠闲", desc: "慢节奏，重体验" },
@@ -73,22 +74,30 @@ export default function TravelCustomization() {
         contact: { name: name.trim(), phone: phone.trim(), wechat: wechat.trim() },
         createdAt: new Date().toISOString(),
       }
-      const res = await axios.post("/api/custom-trips", payload, {
-        headers: { "Content-Type": "application/json" },
-      })
-      if (res.data?.success) {
-        alert("提交成功！我们将尽快与您联系。")
-        setDemand("")
-        setFromCity("")
-        setToCity("")
-        setStartDate("")
-        setEndDate("")
-        setPeople("")
-        setBudget("")
-        setFeatures([])
-        setName("")
-        setPhone("")
-        setWechat("")
+      const res = await aiGenerateRoute(payload)
+    
+      if (res.data) {
+        console.log("AI生成的行程建议:", res.data)
+        // 将结果存入 sessionStorage，跳转到结果页后由结果页读取并展示
+        try {
+          sessionStorage.setItem('smartRecommendResult', JSON.stringify(res.data));
+        } catch (err) {
+          console.error('保存行程结果到 sessionStorage 失败：', err)
+        }
+        // 跳转到结果页
+        window.location.href = '/smartRecommend/result';
+        //重置表单
+        // setDemand("")
+        // setFromCity("")
+        // setToCity("")
+        // setStartDate("")
+        // setEndDate("")
+        // setPeople("")
+        // setBudget("")
+        // setFeatures([])
+        // setName("")
+        // setPhone("")
+        // setWechat("")
       } else {
         throw new Error(res.data?.message || "提交失败")
       }

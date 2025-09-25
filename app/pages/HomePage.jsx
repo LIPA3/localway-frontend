@@ -16,6 +16,15 @@ export default function Home() {
             智能出行
           </Button>
         </Link>
+        <Link to="/savedPlan">
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white shadow-lg backdrop-blur-sm"
+          >
+            我的旅游计划
+          </Button>
+        </Link>
         <Link to="/creatorCenter">
           <Button
             variant="default"

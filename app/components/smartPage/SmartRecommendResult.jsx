@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Badge } from "../ui/Badge"
 import { Button } from "../ui/Button"
 import { MapPin, Calendar, Users, Wallet, ChevronLeft, Check, Plus } from "lucide-react"
-import AIChat from './AIChat';
+import AIChat from "./AiChat";
 import { updatePlanItem } from "../../api/Api";
 import "../../css/CreateArticle.css"
 import "../../css/RecommendResult.css"

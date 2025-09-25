@@ -2,7 +2,7 @@ import axios from "axios";
 
 // API base configuration
 const API_BASE_URL =
-  import.meta.env.VITE_RAILWAY_BACKEND || "http://localhost:8080";
+   "http://localhost:8080";
 
 export let apiClient = axios.create({
   baseURL: API_BASE_URL,

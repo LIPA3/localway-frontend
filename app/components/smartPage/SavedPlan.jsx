@@ -313,7 +313,7 @@ export default function SavedItineraries({ onNavigate }) {
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
-                          onClick={() => onNavigate("smartRecommend")}
+                          onClick={() => onNavigate("planDetail", itinerary.id)}
                           className="bg-orange-500 hover:bg-orange-600 text-white"
                         >
                           <Eye className="w-4 h-4 mr-2" />

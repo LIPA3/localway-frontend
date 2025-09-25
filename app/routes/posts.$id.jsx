@@ -29,7 +29,6 @@ import {
   useUserLikedArticles,
   useUserLikedComments,
 } from "../hooks/useApi";
-import { useQuery } from "@tanstack/react-query";
 import { getArticleById } from "../api/Api";
 import "../css/PostDetail.css";
 
@@ -58,16 +57,31 @@ export default function PostDetail() {
   const [likedComments, setLikedComments] = useState(new Set());
   const [likeCount, setLikeCount] = useState(0);
   const [showAiSummary, setShowAiSummary] = useState(false);
+  const [fetchedArticle, setFetchedArticle] = useState(null);
+  const [isLoadingArticle, setIsLoadingArticle] = useState(false);
+  const [articleError, setArticleError] = useState(null);
 
-  // Fetch article by ID using the API
-  const { data: fetchedArticle, isLoading: articleLoading, isError: articleError } = useQuery({
-    queryKey: ["article", id],
-    queryFn: () => getArticleById(parseInt(id)),
-    enabled: !!id,
-  });
-
-  // Use fetched article if available, otherwise fallback to location state
+  const shouldFetchById = location.state?.shouldFetchById;
   const article = fetchedArticle || location.state?.article;
+
+  // Fetch article by ID if needed
+  useEffect(() => {
+    if (shouldFetchById && id && !fetchedArticle) {
+      setIsLoadingArticle(true);
+      setArticleError(null);
+      
+      getArticleById(parseInt(id))
+        .then((data) => {
+          setFetchedArticle(data);
+          setIsLoadingArticle(false);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch article:', error);
+          setArticleError(error);
+          setIsLoadingArticle(false);
+        });
+    }
+  }, [shouldFetchById, id, fetchedArticle]);
 
   useEffect(() => {
     setLikeCount(article?.likesNum || 0);
@@ -114,28 +128,28 @@ export default function PostDetail() {
   const likeCommentMutation = useLikeComment();
   const unlikeCommentMutation = useUnlikeComment();
 
-  // Show loading state while fetching article
-  if (articleLoading) {
+  // Show loading state when fetching article
+  if (isLoadingArticle) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">加载文章中...</p>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          加载文章中...
         </div>
       </div>
     );
   }
 
-  // Show error state if article fetch failed
+  // Show error state if fetch failed
   if (articleError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            加载文章失败
+            文章加载失败
           </h1>
           <p className="text-muted-foreground mb-4">
-            无法获取文章信息，请稍后重试
+            {articleError.message || '无法加载文章内容'}
           </p>
           <Link to="/">
             <Button variant="outline">返回首页</Button>
@@ -154,7 +168,7 @@ export default function PostDetail() {
             文章未找到
           </h1>
           <p className="text-muted-foreground mb-4">
-            请求的文章不存在
+            请从文章列表页面访问此页面
           </p>
           <Link to="/">
             <Button variant="outline">返回首页</Button>

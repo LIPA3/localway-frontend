@@ -7,6 +7,7 @@ import {
   likeComment,
   unlikeComment,
   getArticles,
+  getArticleById,
   createArticle,
   getArticlesByCreatorId,
   getUserInfo,

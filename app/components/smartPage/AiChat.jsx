@@ -1,16 +1,45 @@
 import { useState, useEffect } from 'react';
 import { Send, Paperclip, Mic, X, RefreshCw } from 'lucide-react';
+import { chatWithAI } from '../../api/Api';
 
 const AIChat = ({ isOpen, onClose }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      role: 'assistant',
-      content: '您好！我是LocalWay智能助手，有什么关于您的行程需要优化的吗？比如调整景点、更换住宿或餐厅安排。',
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+
+  // 初始化消息历史
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('aiChatMessages');
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch (e) {
+        console.error('解析本地存储消息失败:', e);
+        setMessages([
+          {
+            id: Date.now(),
+            role: 'assistant',
+            content: '您好！我是您的旅游咨询助手，专注于为您提供深度文化旅游建议。如果您有任何关于行程、景点或文化体验的需求，请随时告诉我！',
+          }
+        ]);
+      }
+    } else {
+      setMessages([
+        {
+          id: Date.now(),
+          role: 'assistant',
+          content: '您好！我是您的旅游咨询助手，专注于为您提供深度文化旅游建议。如果您有任何关于行程、景点或文化体验的需求，请随时告诉我！',
+        }
+      ]);
+    }
+  }, []);
+
+  // 保存消息到localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('aiChatMessages', JSON.stringify(messages));
+    }
+  }, [messages]);
 
   // 当对话框关闭时，清空输入框
   useEffect(() => {
@@ -19,7 +48,7 @@ const AIChat = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     // 添加用户消息
@@ -29,20 +58,53 @@ const AIChat = ({ isOpen, onClose }) => {
       content: input.trim(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setIsTyping(true);
 
-    // 模拟AI回复
-    setTimeout(() => {
+    try {
+      // 只发送最近几条消息，避免请求体过大
+      const recentMessages = newMessages.slice(-10); // 只发送最近10条消息
+      const context = recentMessages.map(msg => 
+        `${msg.role === 'user' ? '用户' : '助手'}: ${msg.content}`
+      ).join('\n');
+      
+      // 调用后端API与AI聊天
+      const response = await chatWithAI(context);
+      
       const assistantMessage = {
         id: Date.now() + 1,
         role: 'assistant',
-        content: '感谢您的反馈，我已经根据您的需求对行程进行了优化。请查看更新后的行程安排，如有其他问题请随时告诉我。',
+        content: response,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      
+      const updatedMessages = [...newMessages, assistantMessage];
+      setMessages(updatedMessages);
+    } catch (error) {
+      // 如果API调用失败，显示错误消息
+      console.error('API调用失败:', error);
+      const assistantMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: '抱歉，我暂时无法处理您的请求。请确保后端服务正在运行，然后稍后再试。',
+      };
+      
+      const updatedMessages = [...newMessages, assistantMessage];
+      setMessages(updatedMessages);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
+  };
+
+  const handleClear = () => {
+    // 清空聊天记录
+    const initialMessage = {
+      id: Date.now(),
+      role: 'assistant',
+      content: '您好！我是您的旅游咨询助手，专注于为您提供深度文化旅游建议。如果您有任何关于行程、景点或文化体验的需求，请随时告诉我！',
+    };
+    setMessages([initialMessage]);
   };
 
   const handleKeyPress = (e) => {
@@ -71,13 +133,22 @@ const AIChat = ({ isOpen, onClose }) => {
       {/* 对话框头部 */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="font-semibold text-lg">智能助手</h2>
-        <button 
-          onClick={onClose} 
-          className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-          aria-label="关闭"
-        >
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
+        <div className="flex space-x-2">
+          <button 
+            onClick={handleClear}
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="清空聊天记录"
+          >
+            <RefreshCw className="w-5 h-5 text-gray-500" />
+          </button>
+          <button 
+            onClick={onClose} 
+            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="关闭"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
       </div>
 
       {/* 对话内容区域 */}

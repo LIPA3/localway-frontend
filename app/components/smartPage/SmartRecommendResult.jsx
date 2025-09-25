@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
-import { Badge } from "../ui/Badge"
 import { Button } from "../ui/Button"
 import { MapPin, Calendar, Users, Wallet, ChevronLeft, Check, Plus } from "lucide-react"
 import AIChat from './AIChat';
 import { updatePlanItem } from "../../api/Api";
+import { useArticles } from '../../hooks/useApi';
 import "../../css/CreateArticle.css"
 import "../../css/RecommendResult.css"
 
@@ -161,7 +161,6 @@ export default function CustomizationResult() {
   const [plan, setPlan] = useState(mockPlan);
   const s = plan.summary;
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-//   const [updateSuggestion, setUpdateSuggestion] = useState('');
   const [loadedFromSession, setLoadedFromSession] = useState(false);
   const [city, setCity] = useState('');
 
@@ -174,26 +173,31 @@ export default function CustomizationResult() {
   } = useArticles(1, 3, city || undefined, undefined);
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('smartRecommendResult');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        console.log('Loaded smartRecommendResult from session:', parsed);
-        // support possible wrapper shapes: { plan }, { data }, or raw plan
-        let parsedPlan = parsed;
-        if (parsed && parsed.plan) parsedPlan = parsed.plan;
-        if (parsed && parsed.data) parsedPlan = parsed.data;
-
-        if (parsedPlan && (parsedPlan.days || parsedPlan.summary)) {
-          setPlan(parsedPlan);
-          setLoadedFromSession(true);
-        } else {
-          console.warn('session smartRecommendResult found but shape not recognized', parsed);
+    const loadFromSession = async () => {
+      try {
+        const raw = sessionStorage.getItem('smartRecommendResult');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          console.log('Loaded smartRecommendResult from session:', parsed);
+          // support possible wrapper shapes: { plan }, { data }, or raw plan
+          let parsedPlan = parsed;
+          if (parsed && parsed.plan) parsedPlan = parsed.plan;
+          if (parsed && parsed.data) parsedPlan = parsed.data;
+          if (parsedPlan && (parsedPlan.days || parsedPlan.summary)) {
+            setPlan(parsedPlan);
+            setCity(parsedPlan.summary?.toCity || '');
+            setLoadedFromSession(true);
+          } else {
+            console.warn('session smartRecommendResult found but shape not recognized', parsed);
+          }
         }
+      } catch (err) {
+        console.error('读取行程结果失败：', err);
       }
-    } catch (err) {
-      console.error('读取行程结果失败：', err);
-    }
+    };
+
+    // call the async loader
+    loadFromSession();
   }, []);
 
   // 在页面跳转或刷新时调用 useArticles 接口
@@ -233,7 +237,7 @@ export default function CustomizationResult() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="bg-transparent"
+                className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
                 onClick={() => setIsAIChatOpen(true)}
               >
                 ai客服 
@@ -277,11 +281,6 @@ export default function CustomizationResult() {
                 </CardContent>
               </Card>
             </div>
-            <div className="flex flex-wrap gap-2 mt-4">
-              {s.tags.map((t) => (
-                <Badge key={t} variant="secondary" className="mypost-border result-tag">{t}</Badge>
-              ))}
-            </div>
           </CardContent>
         </Card>
 
@@ -314,18 +313,51 @@ export default function CustomizationResult() {
           </CardContent>
         </Card>
 
-        {/* 推荐内容占位 */}
+        {/* 推荐内容：使用 useArticles 获取的数据 */}
         <Card className="soft-card mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">你可能会喜欢的真实分享</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border p-3">
-                <div className="h-24 bg-muted rounded mb-3" />
-                <div className="text-sm font-medium">本地城市体验示例 {i}</div>
-                <div className="text-xs text-muted-foreground mt-1">by 某位向导</div>
-                <Button size="sm" variant="outline" className="mt-3 bg-transparent">查看详情</Button>
+            {articlesLoading && (
+              <div className="col-span-1 md:col-span-3 text-center py-6">
+                加载中...
+              </div>
+            )}
+
+            {articlesError && (
+              <div className="col-span-1 md:col-span-3 text-center text-red-500">
+                加载推荐内容失败：{articlesErrorObj?.message || '未知错误'}
+              </div>
+            )}
+
+            {!articlesLoading && !articlesError && articleList.length === 0 && (
+              <div className="col-span-1 md:col-span-3 text-center text-muted-foreground">
+                暂无推荐内容
+              </div>
+            )}
+
+            {!articlesLoading && !articlesError && articleList.map((article) => (
+              <div key={article.articleId || article.id} className="rounded-lg border p-3">
+                <div className="h-24 bg-muted rounded mb-3">
+                  {article.image && (
+                    <img 
+                      src={article.image} 
+                      alt={article.title}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  )}
+                </div>
+                <div className="text-sm font-medium">{article.title}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  by {article.authorName || '本地向导'}
+                </div>
+                {article.address && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    📍 {article.address}
+                  </div>
+                )}
+                <Button size="sm" variant="outline" className="mt-3 bg-orange-500 hover:bg-orange-600 text-white border-orange-500">查看详情</Button>
               </div>
             ))}
           </CardContent>

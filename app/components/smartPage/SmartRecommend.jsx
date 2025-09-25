@@ -87,17 +87,17 @@ export default function TravelCustomization() {
         // 跳转到结果页
         window.location.href = '/smartRecommend/result';
         //重置表单
-        // setDemand("")
-        // setFromCity("")
-        // setToCity("")
-        // setStartDate("")
-        // setEndDate("")
-        // setPeople("")
-        // setBudget("")
-        // setFeatures([])
-        // setName("")
-        // setPhone("")
-        // setWechat("")
+        setDemand("")
+        setFromCity("")
+        setToCity("")
+        setStartDate("")
+        setEndDate("")
+        setPeople("")
+        setBudget("")
+        setFeatures([])
+        setName("")
+        setPhone("")
+        setWechat("")
       } else {
         throw new Error(res.data?.message || "提交失败")
       }

@@ -15,8 +15,7 @@ const mockPlan = {
     days: 3,
     budget: 1,
     people: 1,
-    rating: 4.8,
-    tags: ["城市观光", "历史文化", "特色美食"],
+    rating: 4.8
   },
   days: [
     {
@@ -164,7 +163,16 @@ export default function CustomizationResult() {
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 //   const [updateSuggestion, setUpdateSuggestion] = useState('');
   const [loadedFromSession, setLoadedFromSession] = useState(false);
-  
+  const [city, setCity] = useState('');
+
+  const {
+    data: articleList = [],
+    isLoading: articlesLoading,
+    isError: articlesError,
+    error: articlesErrorObj,
+    refetch: refetchArticles,
+  } = useArticles(1, 3, city || undefined, undefined);
+
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem('smartRecommendResult');
@@ -187,6 +195,21 @@ export default function CustomizationResult() {
       console.error('读取行程结果失败：', err);
     }
   }, []);
+
+  // 在页面跳转或刷新时调用 useArticles 接口
+  useEffect(() => {
+    if (refetchArticles) {
+      refetchArticles();
+    }
+  }, [refetchArticles]);
+
+  // Debug: log the API response
+  useEffect(() => {
+    console.log('SmartRecommendResult - articleList:', articleList);
+    console.log('SmartRecommendResult - articlesLoading:', articlesLoading);
+    console.log('SmartRecommendResult - articlesError:', articlesError);
+    console.log('SmartRecommendResult - city:', city);
+  }, [articleList, articlesLoading, articlesError, city]);
 //   const handleSubmitUpdate = () => {
 //     // 这里可以添加提交更新建议的逻辑
 //     console.log('提交的更新建议:', updateSuggestion);
@@ -213,7 +236,7 @@ export default function CustomizationResult() {
                 className="bg-transparent"
                 onClick={() => setIsAIChatOpen(true)}
               >
-                编辑 
+                ai客服 
               </Button>
             </div>
           </div>
@@ -261,39 +284,6 @@ export default function CustomizationResult() {
             </div>
           </CardContent>
         </Card>
-        
-        {/* 行程更新建议输入框 */}
-        {/* <Card className="soft-card mb-6">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 text-blue-500">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 21L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M7.83 7.83l4.24 4.24" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 2H5C3.89543 2 3 2.89543 3 4V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <CardTitle className="text-base">行程更新建议</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="flex gap-2">
-              <textarea
-                className="suggestion-input flex-1 p-2 border border-gray-200 rounded-md"
-                placeholder="您希望对行程做哪些调整？比如：增加美食体验、更换住宿类型等..."
-                value={updateSuggestion}
-                onChange={(e) => setUpdateSuggestion(e.target.value)}
-                rows={3}
-              />
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white self-end whitespace-nowrap px-4"
-                onClick={handleSubmitUpdate}
-              >
-                提交更新
-              </Button>
-            </div>
-          </CardContent>
-        </Card> */}
 
         {/* 详细行程用卡片包裹 */}
         <Card className="soft-card mb-6">

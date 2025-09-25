@@ -6,8 +6,6 @@ import {
   Users,
   DollarSign,
   Eye,
-  Download,
-  Share2,
   Trash2,
 } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -42,16 +40,6 @@ export default function SavedItineraries({ onNavigate }) {
     if (confirm("确定要删除这个行程吗？")) {
       setSavedItineraries((prev) => prev.filter((item) => item.id !== id));
     }
-  };
-
-  const handleShareItinerary = (itinerary) => {
-    // 模拟分享功能
-    alert(`已复制 "${itinerary.title}" 的分享链接到剪贴板`);
-  };
-
-  const handleDownloadItinerary = (itinerary) => {
-    // 模拟下载功能
-    alert(`正在下载 "${itinerary.title}" 的详细行程单...`);
   };
 
   return (
@@ -160,30 +148,15 @@ export default function SavedItineraries({ onNavigate }) {
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
-                          onClick={() => onNavigate("smart")}
+                          onClick={() => onNavigate("smartRecommend")}
                           className="bg-orange-500 hover:bg-orange-600 text-white"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           查看详情
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDownloadItinerary(itinerary)}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          下载
-                        </Button>
                       </div>
 
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleShareItinerary(itinerary)}
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
@@ -210,7 +183,7 @@ export default function SavedItineraries({ onNavigate }) {
                 使用智能定制功能创建行程后，可以在这里查看和管理
               </p>
               <Button
-                onClick={() => onNavigate("smart")}
+                onClick={() => onNavigate("smartRecommend")}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 开始定制行程

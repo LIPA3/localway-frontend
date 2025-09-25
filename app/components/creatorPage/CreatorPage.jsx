@@ -32,7 +32,7 @@ export function CreatorProfilePage() {
   const [totalLikes, setTotalLikes] = useState(0)
 
   const creatorStats = {
-    totalPosts: articles.length || 24,
+    totalPosts: articles.length || 0,
     totalFollowers: 890,
     totalExperiences: 18,
   }

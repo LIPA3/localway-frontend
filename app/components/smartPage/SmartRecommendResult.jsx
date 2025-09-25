@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/Button"
 import { MapPin, Calendar, Users, Wallet, ChevronLeft, Check, Plus } from "lucide-react"
-import AIChat from './AIChat';
+import AIChat from "./AiChat";
 import { updatePlanItem } from "../../api/Api";
 import { useArticles } from '../../hooks/useApi';
 import "../../css/CreateArticle.css"

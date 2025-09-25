@@ -232,21 +232,19 @@ export default function PostDetail() {
   const isLiked = likedArticles.has(parseInt(id));
 
   const generateAiSummary = () => {
-    const keyPoints = [
-      "🏛️ 文化体验：深度介绍了广州老城区的传统建筑特色和历史文化背景",
-      "🍵 茶文化：详细讲解了粤式茶文化的精髓和品茶技巧",
-      "🏗️ 建筑风格：重点分析了骑楼建筑和西关大屋的建筑特点",
-      "🍽️ 美食推荐：提供了正宗老字号和隐藏美食的具体位置",
-    ];
+    let  keyPoints = [];
+    if (article?.abstractContent) {
+      try {
+        const parsed = JSON.parse(article.abstractContent);
+        keyPoints = Array.isArray(parsed) ? parsed : [article.abstractContent];
+      } catch {
+        keyPoints = article.abstractContent.includes('\n')
+            ? article.abstractContent.split('\n').filter(point => point.trim())
+            : [article.abstractContent];
+      }
+    }
 
-    const commentTrend = {
-      positive: 85,
-      neutral: 12,
-      negative: 3,
-      mainTopics: ["建筑风格", "茶文化体验", "美食推荐", "交通便利"],
-    };
-
-    return { keyPoints, commentTrend };
+    return { keyPoints };
   };
 
   const aiSummary = generateAiSummary();
@@ -430,7 +428,7 @@ export default function PostDetail() {
               <div className="text-sm text-blue-700">
                 <p className="mb-2">
                   <strong>内容要点：</strong>
-                  本篇内容主要介绍了广州老城区的文化探索体验，重点关注传统建筑和茶文化...
+                  本篇内容主要为AI智能生成的摘要，点击展开查看详情。
                 </p>
               </div>
             ) : (

@@ -13,7 +13,7 @@ import {
   Check,
   Plus,
 } from "lucide-react";
-import AIChat from "./AIChat";
+import AIChat from "./AiChat";
 import "../../css/CreateArticle.css";
 import "../../css/RecommendResult.css";
 
